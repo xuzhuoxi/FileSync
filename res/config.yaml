@@ -1,0 +1,57 @@
+main: 'all'
+groups:
+  - name: 'all'
+    targets:
+      - 'clear'
+      - 'copy'
+      - 'delete'
+      - 'move'
+      - 'sync'
+  - name: 'some'
+    targets:
+      - 'clear'
+      - 'copy'
+      - 'sync'
+targets:
+  - name: 'clear'
+    mode: 'clear'
+    src: 'folderPath'
+    case: true
+    args: '/L/l/r'
+  - name: 'copy'
+    mode: 'copy'
+    src: 'srcPath'
+    tar: 'tarPath'
+    include:
+      - '*.jpg'
+      - '*.png'
+    exclude:
+      - '*.txt'
+    case: false
+    args: '/f/i/L/l/r/s/u'
+  - name: 'delete'
+    mode: 'delete'
+    src: 'path'
+    include:
+      - '*'
+    exclude:
+      - '*.meta'
+    case: true
+    args: '/i/L/l/r'
+  - name: 'move'
+    mode: 'move'
+    src: 'srcPath'
+    tar: 'tarPath'
+    include:
+      - '*.jpg'
+      - '*.png'
+    exclude:
+      - '*.txt'
+    args: '/f/i/L/l/r/s/u'
+  - name: 'sync'
+    mode: 'clear'
+    src: 'srcFolderPath'
+    tar: 'tarFolderPath'
+    include:
+      - '*'
+    args: '/d/D/i/L/l/r/u'
