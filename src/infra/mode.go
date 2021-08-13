@@ -1,11 +1,11 @@
-package foundation
+package infra
 
 import "strings"
 
-type Mode int
+type RuntimeMode int
 
 const (
-	ModeNone Mode = iota
+	ModeNone RuntimeMode = iota
 	ModeClear
 	ModeCopy
 	ModeDelete
@@ -22,8 +22,8 @@ const (
 )
 
 var (
-	modMap  = make(map[Mode]string)
-	modMap2 = make(map[string]Mode)
+	modMap  = make(map[RuntimeMode]string)
+	modMap2 = make(map[string]RuntimeMode)
 )
 
 func init() {
@@ -41,7 +41,7 @@ func init() {
 }
 
 // 通过字符串，查找模式
-func GetMode(value string) Mode {
+func GetMode(value string) RuntimeMode {
 	if value == "" {
 		return ModeNone
 	}
@@ -53,7 +53,7 @@ func GetMode(value string) Mode {
 }
 
 // 取模式的字符串值
-func GetModeValue(mod Mode) string {
+func GetModeValue(mod RuntimeMode) string {
 	if mod == ModeNone {
 		return ""
 	}

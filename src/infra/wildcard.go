@@ -1,4 +1,4 @@
-package foundation
+package infra
 
 import (
 	"github.com/xuzhuoxi/infra-go/stringx"
