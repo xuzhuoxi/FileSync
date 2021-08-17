@@ -23,10 +23,10 @@ func (e *moveExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 	infra.Logger.Info("Move", target)
 }
 
-func newMoveExecutor() module.IModuleExecutor {
+func newExecutor() module.IModuleExecutor {
 	return &moveExecutor{}
 }
 
 func init() {
-	module.RegisterExecutor(infra.ModeMove, newMoveExecutor)
+	module.RegisterExecutor(infra.ModeMove, newExecutor)
 }

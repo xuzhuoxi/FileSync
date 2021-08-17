@@ -23,10 +23,10 @@ func (e *clearExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 	infra.Logger.Info("Clear", target)
 }
 
-func newClearExecutor() module.IModuleExecutor {
+func newExecutor() module.IModuleExecutor {
 	return &clearExecutor{}
 }
 
 func init() {
-	module.RegisterExecutor(infra.ModeClear, newClearExecutor)
+	module.RegisterExecutor(infra.ModeClear, newExecutor)
 }

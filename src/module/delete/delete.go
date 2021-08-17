@@ -23,10 +23,10 @@ func (e *deleteExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 	infra.Logger.Info("Delete", target)
 }
 
-func newDeleteExecutor() module.IModuleExecutor {
+func newExecutor() module.IModuleExecutor {
 	return &deleteExecutor{}
 }
 
 func init() {
-	module.RegisterExecutor(infra.ModeDelete, newDeleteExecutor)
+	module.RegisterExecutor(infra.ModeDelete, newExecutor)
 }

@@ -23,10 +23,10 @@ func (e *syncExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 	infra.Logger.Info("Sync", target)
 }
 
-func newSyncExecutor() module.IModuleExecutor {
+func newExecutor() module.IModuleExecutor {
 	return &syncExecutor{}
 }
 
 func init() {
-	module.RegisterExecutor(infra.ModeSync, newSyncExecutor)
+	module.RegisterExecutor(infra.ModeSync, newExecutor)
 }

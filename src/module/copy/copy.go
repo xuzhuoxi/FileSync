@@ -23,10 +23,10 @@ func (e *copyExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 	infra.Logger.Info("Copy", target)
 }
 
-func newCopyExecutor() module.IModuleExecutor {
+func newExecutor() module.IModuleExecutor {
 	return &copyExecutor{}
 }
 
 func init() {
-	module.RegisterExecutor(infra.ModeCopy, newCopyExecutor)
+	module.RegisterExecutor(infra.ModeCopy, newExecutor)
 }
