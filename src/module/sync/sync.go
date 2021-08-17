@@ -20,7 +20,7 @@ func (e *syncExecutor) ExecConfigTarget(config infra.ConfigTarget) {
 }
 
 func (e *syncExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
-	panic("implement me")
+	infra.Logger.Info("Sync", target)
 }
 
 func newSyncExecutor() module.IModuleExecutor {

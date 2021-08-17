@@ -20,7 +20,7 @@ func (e *moveExecutor) ExecConfigTarget(config infra.ConfigTarget) {
 }
 
 func (e *moveExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
-	panic("implement me")
+	infra.Logger.Info("Move", target)
 }
 
 func newMoveExecutor() module.IModuleExecutor {

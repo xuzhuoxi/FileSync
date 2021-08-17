@@ -20,7 +20,7 @@ func (e *copyExecutor) ExecConfigTarget(config infra.ConfigTarget) {
 }
 
 func (e *copyExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
-	panic("implement me")
+	infra.Logger.Info("Copy", target)
 }
 
 func newCopyExecutor() module.IModuleExecutor {

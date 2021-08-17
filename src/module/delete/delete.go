@@ -20,7 +20,7 @@ func (e *deleteExecutor) ExecConfigTarget(config infra.ConfigTarget) {
 }
 
 func (e *deleteExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
-	panic("implement me")
+	infra.Logger.Info("Delete", target)
 }
 
 func newDeleteExecutor() module.IModuleExecutor {

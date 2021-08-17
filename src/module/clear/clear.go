@@ -20,7 +20,7 @@ func (e *clearExecutor) ExecConfigTarget(config infra.ConfigTarget) {
 }
 
 func (e *clearExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
-	panic("implement me")
+	infra.Logger.Info("Clear", target)
 }
 
 func newClearExecutor() module.IModuleExecutor {
