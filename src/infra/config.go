@@ -9,13 +9,13 @@ const (
 
 type ConfigTarget struct {
 	Name    string `yaml:"name"`
-	Mode    string `yaml:"mode"`
+	Mode    string `yaml:"module"`
 	Src     string `yaml:"src"`
 	Tar     string `yaml:"tar"`
 	Include string `yaml:"include"`
 	Exclude string `yaml:"exclude"`
-	Case    bool   `yaml:"case"`
 	Args    string `yaml:"args"`
+	Case    bool   `yaml:"case"`
 }
 
 func (ct ConfigTarget) GetMode() RuntimeMode {

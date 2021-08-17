@@ -35,7 +35,7 @@ func checkMode(modeValue string) (mode infra.RuntimeMode, err error) {
 	if m, ok := infra.CheckModeValue(modeValue); ok {
 		return m, nil
 	}
-	return infra.ModeNone, errors.New(fmt.Sprintf("Undefined mode:%v", modeValue))
+	return infra.ModeNone, errors.New(fmt.Sprintf("Undefined module:%v", modeValue))
 }
 
 func checkSrc(srcValue string) (src string, err error) {
