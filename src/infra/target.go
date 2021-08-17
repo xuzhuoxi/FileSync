@@ -1,19 +1,17 @@
 package infra
 
-import "strings"
-
 func NewRuntimeTarget(target ConfigTarget) *RuntimeTarget {
-	mode := GetMode(target.Mode)
-	srcArr := strings.Split(target.Src, separator)
-	tarArr := strings.Split(target.Tar, separator)
-	includes := strings.Split(target.Include, separator)
-	excludes := strings.Split(target.Exclude, separator)
-	argMarks := ValuesToMarks(target.Args)
+	mode := target.GetMode()
+	srcArr := target.GetSrcArr()
+	tar := target.Tar
+	includes := target.GetIncludeArr()
+	excludes := target.GetExcludeArr()
+	argMarks := target.GetArgsMark()
 	return &RuntimeTarget{
 		Name:     target.Name,
 		Mode:     mode,
 		SrcArr:   srcArr,
-		TarArr:   tarArr,
+		Tar:      tar,
 		Includes: includes,
 		Excludes: excludes,
 		Case:     target.Case,
@@ -24,11 +22,11 @@ type RuntimeTarget struct {
 	Name     string
 	Mode     RuntimeMode
 	SrcArr   []string
-	TarArr   []string
+	Tar      string
 	Includes []string
 	Excludes []string
 	Case     bool
-	ArgMarks ParamMark
+	ArgMarks ArgMark
 }
 
 func (t *RuntimeTarget) CheckNameFitting(filename string) bool {
@@ -44,8 +42,8 @@ func (t *RuntimeTarget) CheckNameFitting(filename string) bool {
 	return false
 }
 
-func (t *RuntimeTarget) MatchParam(param ParamMark) bool {
-	return t.ArgMarks.MatchParam(param)
+func (t *RuntimeTarget) MatchParam(param ArgMark) bool {
+	return t.ArgMarks.MatchArg(param)
 }
 
 func (t *RuntimeTarget) checkInWildcard(wildcards []string, value string) bool {

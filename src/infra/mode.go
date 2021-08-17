@@ -62,3 +62,20 @@ func GetModeValue(mod RuntimeMode) string {
 	}
 	return ""
 }
+
+// 检查模式值
+func CheckModeValue(modeValue string) (mode RuntimeMode, Verified bool) {
+	modeValue = strings.ToLower(modeValue)
+	if m, ok := modMap2[modeValue]; ok {
+		return m, true
+	}
+	return ModeNone, false
+}
+
+// 检查模式
+func CheckMode(mode RuntimeMode) (modeValue string, Verified bool) {
+	if m, ok := modMap[mode]; ok {
+		return m, true
+	}
+	return "", false
+}
