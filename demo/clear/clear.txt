@@ -1,1 +1,2 @@
 demo/clear/clear.txt
+测试时直接解压clear.zip

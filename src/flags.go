@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/xuzhuoxi/FileSync/src/infra"
+	"github.com/xuzhuoxi/infra-go/filex"
 	"github.com/xuzhuoxi/infra-go/slicex"
 	"strings"
 )
@@ -43,10 +44,10 @@ func checkSrc(srcValue string) (src string, err error) {
 	if "" == srcValue {
 		return "", errors.New(fmt.Sprintf("Src Empty! "))
 	}
-	if !strings.Contains(srcValue, infra.PathSep) {
+	if !strings.Contains(srcValue, filex.PathListSeparatorStr) {
 		return srcValue, nil
 	}
-	srcArr := strings.Split(srcValue, infra.PathSep)
+	srcArr := strings.Split(srcValue, filex.PathListSeparatorStr)
 	for index := range srcArr {
 		if "" == srcArr[index] || "" == strings.TrimSpace(srcArr[index]) {
 			return "", errors.New(fmt.Sprintf("Src[%d] Empty! ", index))
@@ -60,7 +61,7 @@ func checkTar(tarValue string) (tar string, err error) {
 	if "" == tarValue {
 		return "", errors.New(fmt.Sprintf("Tar Empty! "))
 	}
-	if strings.Contains(tarValue, infra.PathSep) {
+	if strings.Contains(tarValue, filex.PathListSeparatorStr) {
 		return "", errors.New(fmt.Sprintf("Tar does not support multi paths! "))
 	}
 	return tarValue, nil

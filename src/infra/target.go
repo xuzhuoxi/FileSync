@@ -29,17 +29,25 @@ type RuntimeTarget struct {
 	ArgMarks ArgMark
 }
 
+func (t *RuntimeTarget) HasIncludeLimit() bool {
+	return len(t.Includes) != 0
+}
+
+func (t *RuntimeTarget) HasExcludeLimit() bool {
+	return len(t.Excludes) != 0
+}
+
 func (t *RuntimeTarget) CheckNameFitting(filename string) bool {
-	if len(t.Includes) == 0 && len(t.Excludes) == 0 {
+	if !t.HasExcludeLimit() && !t.HasIncludeLimit() {
 		return true
 	}
-	if t.checkInWildcard(t.Excludes, filename) {
+	if t.HasExcludeLimit() && t.checkInWildcard(t.Excludes, filename) {
 		return false
 	}
-	if t.checkInWildcard(t.Includes, filename) {
-		return true
+	if t.HasIncludeLimit() && !t.checkInWildcard(t.Includes, filename) {
+		return false
 	}
-	return false
+	return true
 }
 
 func (t *RuntimeTarget) MatchParam(param ArgMark) bool {

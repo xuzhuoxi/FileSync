@@ -17,11 +17,21 @@ var (
 )
 
 func init() {
-	Logger.SetConfig(logx.LogConfig{Type: logx.TypeConsole, Level: logx.LevelAll})
-	Logger.SetConfig(logx.LogConfig{Type: logx.TypeRollingFile, Level: logx.LevelAll,
-		FileDir: osxu.GetRunningDir(), FileName: ApplicationName, FileExtName: ".log", MaxSize: 256 * mathx.KB})
+	Logger = GenLogger(ArgMarkLogFile | ArgMarkLogConsole)
 }
 
 func SetRunningDir(dir string) {
 	RunningDir = dir
+}
+
+func GenLogger(mark ArgMark) logx.ILogger {
+	logger := logx.NewLogger()
+	if mark.MatchArg(ArgMarkLogConsole) {
+		logger.SetConfig(logx.LogConfig{Type: logx.TypeConsole, Level: logx.LevelAll})
+	}
+	if mark.MatchArg(ArgMarkLogFile) {
+		logger.SetConfig(logx.LogConfig{Type: logx.TypeRollingFile, Level: logx.LevelAll,
+			FileDir: osxu.GetRunningDir(), FileName: ApplicationName, FileExtName: ".log", MaxSize: 4 * mathx.MB})
+	}
+	return logger
 }

@@ -1,6 +1,17 @@
 package module
 
-import "github.com/xuzhuoxi/FileSync/src/infra"
+import (
+	"github.com/xuzhuoxi/FileSync/src/infra"
+)
+
+type iModuleExecutor interface {
+	// 初始化Log
+	initLogger(mark infra.ArgMark)
+	// 初始化处理列表
+	initExecuteList()
+	// 处理列表中文件
+	execList()
+}
 
 type IModuleExecutor interface {
 	// 执行任务

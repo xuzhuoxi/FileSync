@@ -1,21 +1,29 @@
 package infra
 
-import "strings"
+import (
+	"fmt"
+	"github.com/xuzhuoxi/infra-go/filex"
+	"strings"
+)
 
 const (
 	WildcardSep = ","
-	PathSep     = ","
 )
 
 type ConfigTarget struct {
 	Name    string `yaml:"name"`
-	Mode    string `yaml:"module"`
+	Mode    string `yaml:"mode"`
 	Src     string `yaml:"src"`
 	Tar     string `yaml:"tar"`
 	Include string `yaml:"include"`
 	Exclude string `yaml:"exclude"`
 	Args    string `yaml:"args"`
 	Case    bool   `yaml:"case"`
+}
+
+func (ct ConfigTarget) String() string {
+	return fmt.Sprintf("ConfigTarget[Name='%s',Mode='%s',Src='%s',Tar='%s',Include='%s',Exclude='%s',Args='%s',Case='%v']",
+		ct.Name, ct.Mode, ct.Src, ct.Tar, ct.Include, ct.Exclude, ct.Args, ct.Case)
 }
 
 func (ct ConfigTarget) GetMode() RuntimeMode {
@@ -26,10 +34,10 @@ func (ct ConfigTarget) GetSrcArr() []string {
 	if ct.Src == "" {
 		return nil
 	}
-	if !strings.Contains(ct.Src, PathSep) {
+	if !strings.Contains(ct.Src, filex.PathListSeparatorStr) {
 		return []string{ct.Src}
 	}
-	return strings.Split(ct.Src, PathSep)
+	return strings.Split(ct.Src, filex.PathListSeparatorStr)
 }
 
 func (ct ConfigTarget) GetIncludeArr() []string {

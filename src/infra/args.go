@@ -23,7 +23,7 @@ const (
 	ArgMarkDouble
 	ArgMarkForce
 	ArgMarkIgnore
-	ArgMarkLog
+	ArgMarkLogFile
 	ArgMarkLogConsole
 	ArgMarkRecurse
 	ArgMarkStable
@@ -31,13 +31,13 @@ const (
 )
 
 const (
-	ClearArgMark = ArgMarkLog | ArgMarkLogConsole | ArgMarkRecurse
-	CopyArgMark  = ArgMarkForce | ArgMarkIgnore | ArgMarkLog | ArgMarkLogConsole |
+	ClearArgMark = ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse
+	CopyArgMark  = ArgMarkForce | ArgMarkIgnore | ArgMarkLogFile | ArgMarkLogConsole |
 		ArgMarkRecurse | ArgMarkStable | ArgMarkUpdate
-	DeleteArgMark = ArgMarkIgnore | ArgMarkLog | ArgMarkLogConsole | ArgMarkRecurse
-	MoveArgMark   = ArgMarkForce | ArgMarkIgnore | ArgMarkLog | ArgMarkLogConsole |
+	DeleteArgMark = ArgMarkIgnore | ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse
+	MoveArgMark   = ArgMarkForce | ArgMarkIgnore | ArgMarkLogFile | ArgMarkLogConsole |
 		ArgMarkRecurse | ArgMarkStable | ArgMarkUpdate
-	SyncArgMark = ArgMarDir | ArgMarkIgnore | ArgMarkLog | ArgMarkLogConsole |
+	SyncArgMark = ArgMarDir | ArgMarkIgnore | ArgMarkLogFile | ArgMarkLogConsole |
 		ArgMarkRecurse | ArgMarkUpdate
 )
 
@@ -52,7 +52,7 @@ var (
 		ArgValueConsole, ArgValueRecurse, ArgValueUpdate}
 )
 
-const DefaultArgMark = ArgMarkLog | ArgMarkLogConsole
+const DefaultArgMark = ArgMarkLogFile | ArgMarkLogConsole
 
 var (
 	mapValue2Mark = make(map[string]ArgMark)
@@ -64,7 +64,7 @@ func init() {
 	mapMark2Value[ArgMarkDouble] = ArgValueDouble
 	mapMark2Value[ArgMarkForce] = ArgValueForce
 	mapMark2Value[ArgMarkIgnore] = ArgValueIgnore
-	mapMark2Value[ArgMarkLog] = ArgValueLog
+	mapMark2Value[ArgMarkLogFile] = ArgValueLog
 	mapMark2Value[ArgMarkLogConsole] = ArgValueConsole
 	mapMark2Value[ArgMarkRecurse] = ArgValueRecurse
 	mapMark2Value[ArgMarkStable] = ArgValueStable
@@ -74,7 +74,7 @@ func init() {
 	mapValue2Mark[ArgValueDouble] = ArgMarkDouble
 	mapValue2Mark[ArgValueForce] = ArgMarkForce
 	mapValue2Mark[ArgValueIgnore] = ArgMarkIgnore
-	mapValue2Mark[ArgValueLog] = ArgMarkLog
+	mapValue2Mark[ArgValueLog] = ArgMarkLogFile
 	mapValue2Mark[ArgValueConsole] = ArgMarkLogConsole
 	mapValue2Mark[ArgValueRecurse] = ArgMarkRecurse
 	mapValue2Mark[ArgValueStable] = ArgMarkStable
