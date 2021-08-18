@@ -1,9 +1,5 @@
 package infra
 
-import (
-	"strings"
-)
-
 const (
 	ArgValueDir     = "/d" //单向
 	ArgValueDouble  = "/D" //双向
@@ -15,6 +11,8 @@ const (
 	ArgValueStable  = "/s" //保持文件目录结构
 	ArgValueUpdate  = "/u" //若目标文件比源文件旧，更新目标文件
 )
+
+const argStart = '/'
 
 type ArgMark int
 
@@ -100,17 +98,22 @@ func ValuesToMarks(params string) ArgMark {
 }
 
 // 拆分参数字符串为参数数组
-func SplitArgs(params string) []string {
-	if "" == params {
+func SplitArgs(args string) []string {
+	if "" == args {
 		return nil
 	}
-	rs := strings.Split(params, "/")
-	if len(rs) == 0 {
-		return nil
+
+	start := 0
+	var rs []string
+	for index := range args {
+		if args[index] == argStart {
+			if index > start {
+				rs = append(rs, args[start:index])
+			}
+			start = index
+		}
 	}
-	for index := range rs {
-		rs[index] = "/" + rs[index]
-	}
+	rs = append(rs, args[start:])
 	return rs
 }
 

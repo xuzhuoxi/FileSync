@@ -1,18 +1,14 @@
-package clear
+package module
 
 import (
+	"fmt"
 	"github.com/xuzhuoxi/FileSync/src/infra"
-	"github.com/xuzhuoxi/FileSync/src/module"
 	"github.com/xuzhuoxi/infra-go/filex"
 	"github.com/xuzhuoxi/infra-go/logx"
 	"os"
 )
 
-func init() {
-	module.RegisterExecutor(infra.ModeClear, newExecutor)
-}
-
-func newExecutor() module.IModuleExecutor {
+func newClearExecutor() IModuleExecutor {
 	return &clearExecutor{list: infra.NewPathList(0, 128)}
 }
 
@@ -28,8 +24,8 @@ func (e *clearExecutor) Exec(src, tar, include, exclude, args string, wildcardCa
 	e.ExecConfigTarget(config)
 }
 
-func (e *clearExecutor) ExecConfigTarget(config infra.ConfigTarget) {
-	runtimeTarget := infra.NewRuntimeTarget(config)
+func (e *clearExecutor) ExecConfigTarget(cfgTarget infra.ConfigTarget) {
+	runtimeTarget := infra.NewRuntimeTarget(cfgTarget)
 	e.ExecRuntimeTarget(runtimeTarget)
 }
 
@@ -52,8 +48,12 @@ func (e *clearExecutor) initLogger(mark infra.ArgMark) {
 
 func (e *clearExecutor) initExecuteList() {
 	recurse := e.target.ArgMarks.MatchArg(infra.ArgMarkRecurse)
-	for _, src := range e.target.SrcArr {
+	for index, src := range e.target.SrcArr {
 		path := filex.Combine(infra.RunningDir, src)
+		if !filex.IsFolder(path) {
+			e.logger.Warnln(fmt.Sprintf("[clear] Ignore src[%d]: %s", index, src))
+			continue
+		}
 		e.checkPath(path, recurse)
 	}
 	e.list.Sort()

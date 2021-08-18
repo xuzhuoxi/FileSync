@@ -1,15 +1,15 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/xuzhuoxi/FileSync/src/infra"
 	"github.com/xuzhuoxi/FileSync/src/module"
-	_ "github.com/xuzhuoxi/FileSync/src/module/clear"
-	_ "github.com/xuzhuoxi/FileSync/src/module/copy"
-	_ "github.com/xuzhuoxi/FileSync/src/module/delete"
-	_ "github.com/xuzhuoxi/FileSync/src/module/move"
-	_ "github.com/xuzhuoxi/FileSync/src/module/sync"
+	"github.com/xuzhuoxi/infra-go/filex"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
+	"strings"
 )
 
 func main() {
@@ -32,6 +32,11 @@ func execTargets(cfgTargets []infra.ConfigTarget) {
 }
 
 func execTarget(cfgTarget infra.ConfigTarget) {
+	err := cfgTarget.CheckTarget()
+	if nil != err {
+		infra.Logger.Errorln(fmt.Sprintf("[main] Target=%v Err=%v", cfgTarget.Name, err))
+		return
+	}
 	executor := module.GetExecutor(cfgTarget.GetMode())
 	infra.Logger.Infoln(fmt.Sprintf("[main] Target=%v", cfgTarget))
 	executor.ExecConfigTarget(cfgTarget)
@@ -56,12 +61,44 @@ func parseFlags() (targets []infra.ConfigTarget, err error) {
 	if *file != "" {
 		targets, err = loadTargets(*file, *main)
 	} else {
-		target, errTarget := genTarget(fmt.Sprintf("Cmd.%s", *mode), *mode, *src, *tar, *include, *exclude, *wildcardCase, *args)
-		if nil != errTarget {
-			err = errTarget
-		} else {
-			targets = []infra.ConfigTarget{target}
-		}
+		target := genTarget(fmt.Sprintf("Cmd.%s", *mode), *mode, *src, *tar, *include, *exclude, *wildcardCase, *args)
+		targets = []infra.ConfigTarget{target}
 	}
 	return
+}
+
+func genTarget(name, mode, src, tar, include, exclude string, wildcardCase bool,
+	args string) (target infra.ConfigTarget) {
+	mode = strings.ToLower(mode)
+	return infra.ConfigTarget{
+		Name: name, Mode: mode, Src: src, Tar: tar, Include: include, Exclude: exclude, Case: wildcardCase, Args: args}
+}
+
+func loadTargets(relativeFilePath string, main string) (targets []infra.ConfigTarget, err error) {
+	absPath := filex.Combine(infra.RunningDir, relativeFilePath)
+	config := &infra.Config{}
+	err = loadConfigFile(absPath, config)
+	if nil != err {
+		return
+	}
+	if "" == main {
+		return config.MainTargets(), nil
+	}
+	targets = config.GetMainTargets(main)
+	if len(targets) == 0 {
+		err = errors.New(fmt.Sprintf("No targets with name '%s'", main))
+	}
+	return
+}
+
+func loadConfigFile(configPath string, dataRef interface{}) error {
+	bs, err := ioutil.ReadFile(configPath)
+	if nil != err {
+		return err
+	}
+	err = yaml.Unmarshal(bs, dataRef)
+	if nil != err {
+		return err
+	}
+	return nil
 }

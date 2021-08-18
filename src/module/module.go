@@ -37,3 +37,11 @@ func GetExecutor(mode infra.RuntimeMode) IModuleExecutor {
 func RegisterExecutor(mode infra.RuntimeMode, generator ModuleExecutorGenerator) {
 	generators[mode] = generator
 }
+
+func init() {
+	RegisterExecutor(infra.ModeClear, newClearExecutor)
+	RegisterExecutor(infra.ModeCopy, newCopyExecutor)
+	RegisterExecutor(infra.ModeDelete, newDeleteExecutor)
+	RegisterExecutor(infra.ModeMove, newMoveExecutor)
+	RegisterExecutor(infra.ModeSync, newSyncExecutor)
+}

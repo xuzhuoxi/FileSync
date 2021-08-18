@@ -1,8 +1,10 @@
 package infra
 
 import (
+	"errors"
 	"fmt"
 	"github.com/xuzhuoxi/infra-go/filex"
+	"github.com/xuzhuoxi/infra-go/slicex"
 	"strings"
 )
 
@@ -48,6 +50,30 @@ func (ct ConfigTarget) GetExcludeArr() []string {
 	return ct.splitWildcard(ct.Exclude)
 }
 
+func (ct ConfigTarget) CheckTarget() (err error) {
+	m, errMode := checkMode(ct.Mode)
+	if nil != errMode {
+		err = errMode
+		return
+	}
+	err = checkSrc(ct.Src)
+	if nil != err {
+		return
+	}
+	if m == ModeCopy || m == ModeMove || m == ModeSync {
+		err = checkTar(ct.Tar)
+		if nil != err {
+			return
+		}
+	}
+	err = checkArgs(ct.Args, GetSupportArgs(m))
+	return
+}
+
+func (ct ConfigTarget) GetArgsMark() ArgMark {
+	return ValuesToMarks(ct.Args)
+}
+
 func (ct ConfigTarget) splitWildcard(value string) []string {
 	if value == "" {
 		return nil
@@ -56,10 +82,6 @@ func (ct ConfigTarget) splitWildcard(value string) []string {
 		return []string{value}
 	}
 	return strings.Split(value, WildcardSep)
-}
-
-func (ct ConfigTarget) GetArgsMark() ArgMark {
-	return ValuesToMarks(ct.Args)
 }
 
 type ConfigGroup struct {
@@ -127,4 +149,55 @@ func (c *Config) GetTarget(targetName string) (target ConfigTarget, ok bool) {
 		}
 	}
 	return ConfigTarget{}, false
+}
+
+//-------------------------
+
+func checkMode(modeValue string) (mode RuntimeMode, err error) {
+	if m, ok := CheckModeValue(modeValue); ok {
+		return m, nil
+	}
+	return ModeNone, errors.New(fmt.Sprintf("Undefined module:%v", modeValue))
+}
+
+func checkSrc(srcValue string) (err error) {
+	if "" == srcValue || "" == strings.TrimSpace(srcValue) {
+		return errors.New(fmt.Sprintf("Src Empty! "))
+	}
+	if !strings.Contains(srcValue, filex.PathListSeparatorStr) {
+		return nil
+	}
+	srcArr := strings.Split(srcValue, filex.PathListSeparatorStr)
+	for index := range srcArr {
+		if "" == srcArr[index] || "" == strings.TrimSpace(srcArr[index]) {
+			return errors.New(fmt.Sprintf("Src[%d] Empty! ", index))
+		}
+	}
+	return
+}
+
+func checkTar(tarValue string) (err error) {
+	if "" == tarValue || "" == strings.TrimSpace(tarValue) {
+		return errors.New(fmt.Sprintf("Tar Empty! "))
+	}
+	if strings.Contains(tarValue, filex.PathListSeparatorStr) {
+		return errors.New(fmt.Sprintf("Tar does not support multi paths! "))
+	}
+	return nil
+}
+
+func checkArgs(value string, supports []string) (err error) {
+	if "" == value {
+		return
+	}
+	if len(supports) == 0 {
+		return errors.New(fmt.Sprintf("Unsupport Args:'%s'", value))
+	}
+	args := SplitArgs(value)
+	for index := range args {
+		if !slicex.ContainsString(supports, args[index]) {
+			return errors.New(fmt.Sprintf("Unsupport Arg[%d]:'%s'", index, args[index]))
+		}
+	}
+	return nil
 }

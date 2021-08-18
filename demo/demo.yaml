@@ -7,7 +7,7 @@ groups:
 targets:
   - name: 'clear1'
     mode: 'clear'
-    src: 'clear/b;clear/c'
+    src: 'clear/b;clear/c;clear/d'
     args: '/L/l/r'
     case: true
   - name: 'clear2'
