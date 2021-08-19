@@ -29,14 +29,11 @@ const (
 )
 
 const (
-	ClearArgMark = ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse
-	CopyArgMark  = ArgMarkForce | ArgMarkIgnore | ArgMarkLogFile | ArgMarkLogConsole |
-		ArgMarkRecurse | ArgMarkStable | ArgMarkUpdate
-	DeleteArgMark = ArgMarkIgnore | ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse
-	MoveArgMark   = ArgMarkForce | ArgMarkIgnore | ArgMarkLogFile | ArgMarkLogConsole |
-		ArgMarkRecurse | ArgMarkStable | ArgMarkUpdate
-	SyncArgMark = ArgMarDir | ArgMarkIgnore | ArgMarkLogFile | ArgMarkLogConsole |
-		ArgMarkRecurse | ArgMarkUpdate
+	ClearArgMark  = ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse
+	CopyArgMark   = ArgMarkForce | ArgMarkIgnore | ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse | ArgMarkStable | ArgMarkUpdate
+	DeleteArgMark = ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse
+	MoveArgMark   = ArgMarkForce | ArgMarkIgnore | ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse | ArgMarkStable | ArgMarkUpdate
+	SyncArgMark   = ArgMarDir | ArgMarkIgnore | ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse | ArgMarkUpdate
 )
 
 var (

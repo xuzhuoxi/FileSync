@@ -12,7 +12,7 @@ func newMoveExecutor() IModuleExecutor {
 type moveExecutor struct {
 	target *infra.RuntimeTarget
 	logger logx.ILogger
-	list   infra.PathList
+	list   pathList
 }
 
 func (e *moveExecutor) Exec(src, tar, include, exclude, args string, wildcardCase bool) {

@@ -8,7 +8,7 @@ import (
 	"github.com/xuzhuoxi/FileSync/src/module"
 	"github.com/xuzhuoxi/infra-go/filex"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
+	"os"
 	"strings"
 )
 
@@ -75,9 +75,9 @@ func genTarget(name, mode, src, tar, include, exclude string, wildcardCase bool,
 }
 
 func loadTargets(relativeFilePath string, main string) (targets []infra.ConfigTarget, err error) {
-	absPath := filex.Combine(infra.RunningDir, relativeFilePath)
+	cfgPath := filex.Combine(infra.RunningDir, relativeFilePath)
 	config := &infra.Config{}
-	err = loadConfigFile(absPath, config)
+	err = loadConfigFile(cfgPath, config)
 	if nil != err {
 		return
 	}
@@ -88,11 +88,13 @@ func loadTargets(relativeFilePath string, main string) (targets []infra.ConfigTa
 	if len(targets) == 0 {
 		err = errors.New(fmt.Sprintf("No targets with name '%s'", main))
 	}
+	upDir, _ := filex.GetUpDir(cfgPath)
+	infra.SetRunningDir(upDir)
 	return
 }
 
 func loadConfigFile(configPath string, dataRef interface{}) error {
-	bs, err := ioutil.ReadFile(configPath)
+	bs, err := os.ReadFile(configPath)
 	if nil != err {
 		return err
 	}

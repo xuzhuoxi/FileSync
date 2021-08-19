@@ -9,13 +9,13 @@ import (
 )
 
 func newClearExecutor() IModuleExecutor {
-	return &clearExecutor{list: infra.NewPathList(0, 128)}
+	return &clearExecutor{list: newPathList(0, 128)}
 }
 
 type clearExecutor struct {
 	target *infra.RuntimeTarget
 	logger logx.ILogger
-	list   infra.PathList
+	list   pathList
 }
 
 func (e *clearExecutor) Exec(src, tar, include, exclude, args string, wildcardCase bool) {
@@ -37,7 +37,7 @@ func (e *clearExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 		return
 	}
 	e.target = target
-	e.initLogger(target.ArgMarks)
+	e.initLogger(target.ArgsMark)
 	e.initExecuteList()
 	e.execList()
 }
@@ -47,7 +47,7 @@ func (e *clearExecutor) initLogger(mark infra.ArgMark) {
 }
 
 func (e *clearExecutor) initExecuteList() {
-	recurse := e.target.ArgMarks.MatchArg(infra.ArgMarkRecurse)
+	recurse := e.target.ArgsMark.MatchArg(infra.ArgMarkRecurse)
 	for index, src := range e.target.SrcArr {
 		path := filex.Combine(infra.RunningDir, src)
 		if !filex.IsFolder(path) {
@@ -69,13 +69,13 @@ func (e *clearExecutor) execList() {
 	}
 }
 
-func (e *clearExecutor) checkPath(path string, recurse bool) {
-	isFile := e.checkDir(path, recurse)
+func (e *clearExecutor) checkPath(fullPath string, recurse bool) {
+	isFile := e.checkDir(fullPath, recurse)
 	if isFile {
 		return
 	}
 	if recurse {
-		dirPaths, _ := filex.GetPathsInDir(path, func(subPath string, info os.FileInfo) bool {
+		dirPaths, _ := filex.GetPathsInDir(fullPath, func(subPath string, info os.FileInfo) bool {
 			return info.IsDir()
 		})
 		if len(dirPaths) == 0 {
@@ -87,29 +87,29 @@ func (e *clearExecutor) checkPath(path string, recurse bool) {
 	}
 }
 
-func (e *clearExecutor) checkDir(dir string, recurse bool) (isFile bool) {
+func (e *clearExecutor) checkDir(fullDir string, recurse bool) (isFile bool) {
 	// 非目录
-	if !filex.IsFolder(dir) {
+	if !filex.IsFolder(fullDir) {
 		return true
 	}
-	_, filename := filex.Split(dir)
+	_, filename := filex.Split(fullDir)
 	// 名称不匹配
 	if !e.target.CheckNameFitting(filename) {
 		return false
 	}
 	if recurse {
-		size, _ := filex.GetFolderSize(dir)
+		size, _ := filex.GetFolderSize(fullDir)
 		// 非空
 		if 0 != size {
 			return false
 		}
 	} else {
-		dirPaths, _ := filex.GetPathsInDir(dir, nil)
+		dirPaths, _ := filex.GetPathsInDir(fullDir, nil)
 		// 非空
 		if len(dirPaths) != 0 {
 			return false
 		}
 	}
-	e.list = append(e.list, dir)
+	e.list = append(e.list, fullDir)
 	return true
 }

@@ -12,7 +12,7 @@ func newSyncExecutor() IModuleExecutor {
 type syncExecutor struct {
 	target *infra.RuntimeTarget
 	logger logx.ILogger
-	list   infra.PathList
+	list   pathList
 }
 
 func (e *syncExecutor) Exec(src, tar, include, exclude, args string, wildcardCase bool) {

@@ -15,7 +15,7 @@ func NewRuntimeTarget(target ConfigTarget) *RuntimeTarget {
 		Includes: includes,
 		Excludes: excludes,
 		Case:     target.Case,
-		ArgMarks: argMarks}
+		ArgsMark: argMarks}
 }
 
 type RuntimeTarget struct {
@@ -26,7 +26,7 @@ type RuntimeTarget struct {
 	Includes []string
 	Excludes []string
 	Case     bool
-	ArgMarks ArgMark
+	ArgsMark ArgMark
 }
 
 func (t *RuntimeTarget) HasIncludeLimit() bool {
@@ -51,7 +51,7 @@ func (t *RuntimeTarget) CheckNameFitting(filename string) bool {
 }
 
 func (t *RuntimeTarget) MatchParam(param ArgMark) bool {
-	return t.ArgMarks.MatchArg(param)
+	return t.ArgsMark.MatchArg(param)
 }
 
 func (t *RuntimeTarget) checkInWildcard(wildcards []string, value string) bool {

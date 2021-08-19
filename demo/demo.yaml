@@ -24,12 +24,12 @@ targets:
     args: '/L/l/r'
   - name: 'copy'
     mode: 'copy'
-    src: 'srcPath'
-    tar: 'tarPath'
-    include: '*.jpg,*.png'
-    exclude: '*.txt'
-    case: false
-    args: '/f/i/L/l/r/s/u'
+    src: 'copy/src1;copy/src2;copy.txt'
+    tar: 'copy/tar'
+    include: ''
+    exclude: '*.png'
+    case: true
+    args: '/f/L/l/r/s/u'
   - name: 'delete'
     mode: 'delete'
     src: 'path'
