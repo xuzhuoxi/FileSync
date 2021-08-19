@@ -5,7 +5,7 @@ import (
 	"github.com/xuzhuoxi/infra-go/logx"
 )
 
-func newSyncExecutor() IModuleExecutor {
+func newSyncExecutor() IModeExecutor {
 	return &syncExecutor{}
 }
 

@@ -5,7 +5,7 @@ import (
 	"github.com/xuzhuoxi/infra-go/logx"
 )
 
-func newMoveExecutor() IModuleExecutor {
+func newMoveExecutor() IModeExecutor {
 	return &moveExecutor{}
 }
 

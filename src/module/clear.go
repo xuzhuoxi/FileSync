@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-func newClearExecutor() IModuleExecutor {
+func newClearExecutor() IModeExecutor {
 	return &clearExecutor{list: newPathList(0, 128)}
 }
 

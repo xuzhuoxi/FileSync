@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-func newDeleteExecutor() IModuleExecutor {
+func newDeleteExecutor() IModeExecutor {
 	return &deleteExecutor{list: newPathList(0, 128)}
 }
 

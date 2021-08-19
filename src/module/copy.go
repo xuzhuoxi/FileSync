@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func newCopyExecutor() IModuleExecutor {
+func newCopyExecutor() IModeExecutor {
 	return &copyExecutor{srcList: newDetailPathList(0, 128)}
 }
 
