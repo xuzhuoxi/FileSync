@@ -14,8 +14,10 @@ func newDeleteExecutor() IModeExecutor {
 
 type deleteExecutor struct {
 	target *infra.RuntimeTarget
-	logger logx.ILogger
 	list   pathList
+
+	logger  logx.ILogger
+	recurse bool
 }
 
 func (e *deleteExecutor) Exec(src, tar, include, exclude, args string, wildcardCase bool) {
@@ -37,24 +39,25 @@ func (e *deleteExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 		return
 	}
 	e.target = target
-	e.initLogger(target.ArgsMark)
+	e.initArgs()
 	e.initExecuteList()
 	e.execList()
 }
 
-func (e *deleteExecutor) initLogger(mark infra.ArgMark) {
-	e.logger = infra.GenLogger(mark)
+func (e *deleteExecutor) initArgs() {
+	argsMark := e.target.ArgsMark
+	e.logger = infra.GenLogger(argsMark)
+	e.recurse = argsMark.MatchArg(infra.ArgMarkRecurse)
 }
 
 func (e *deleteExecutor) initExecuteList() {
-	recurse := e.target.ArgsMark.MatchArg(infra.ArgMarkRecurse)
 	for index, src := range e.target.SrcArr {
 		path := filex.Combine(infra.RunningDir, src)
 		if !filex.IsExist(path) {
 			e.logger.Warnln(fmt.Sprintf("[clear] Ignore src[%d]: %s", index, src))
 			continue
 		}
-		e.checkPath(path, recurse)
+		e.checkPath(path)
 	}
 	e.list.Sort()
 }
@@ -69,19 +72,19 @@ func (e *deleteExecutor) execList() {
 	}
 }
 
-func (e *deleteExecutor) checkPath(fullPath string, recurse bool) {
+func (e *deleteExecutor) checkPath(fullPath string) {
 	match := e.checkName(fullPath)
 
 	if match {
 		return
 	}
-	if recurse && filex.IsFolder(fullPath) {
+	if e.recurse && filex.IsFolder(fullPath) {
 		subPaths, _ := filex.GetPathsInDir(fullPath, nil)
 		if len(subPaths) == 0 {
 			return
 		}
 		for _, dir := range subPaths {
-			e.checkPath(dir, true)
+			e.checkPath(dir)
 		}
 	}
 }

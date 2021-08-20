@@ -1,8 +1,7 @@
 package infra
 
 const (
-	ArgValueDir     = "/d" //单向
-	ArgValueDouble  = "/D" //双向
+	ArgValueDouble  = "/d" //双向
 	ArgValueForce   = "/f" //强制(force)，若有重复或其它疑问时，不会询问用户，而强制复制
 	ArgValueIgnore  = "/i" //忽略空目录
 	ArgValueLog     = "/L" //记录日志
@@ -17,8 +16,7 @@ const argStart = '/'
 type ArgMark int
 
 const (
-	ArgMarDir ArgMark = 1 << iota
-	ArgMarkDouble
+	ArgMarkDouble ArgMark = 1 << iota
 	ArgMarkForce
 	ArgMarkIgnore
 	ArgMarkLogFile
@@ -33,7 +31,7 @@ const (
 	CopyArgMark   = ArgMarkForce | ArgMarkIgnore | ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse | ArgMarkStable | ArgMarkUpdate
 	DeleteArgMark = ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse
 	MoveArgMark   = ArgMarkForce | ArgMarkIgnore | ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse | ArgMarkStable | ArgMarkUpdate
-	SyncArgMark   = ArgMarDir | ArgMarkIgnore | ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse | ArgMarkUpdate
+	SyncArgMark   = ArgMarkIgnore | ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse | ArgMarkUpdate
 )
 
 var (
@@ -43,7 +41,7 @@ var (
 	DeleteArgs = []string{ArgValueIgnore, ArgValueLog, ArgValueConsole, ArgValueRecurse}
 	MoveArgs   = []string{ArgValueForce, ArgValueIgnore, ArgValueLog, ArgValueConsole,
 		ArgValueRecurse, ArgValueStable, ArgValueUpdate}
-	SyncArgs = []string{ArgValueDir, ArgValueDouble, ArgValueIgnore, ArgValueLog,
+	SyncArgs = []string{ArgValueDouble, ArgValueIgnore, ArgValueLog,
 		ArgValueConsole, ArgValueRecurse, ArgValueUpdate}
 )
 
@@ -55,7 +53,6 @@ var (
 )
 
 func init() {
-	mapMark2Value[ArgMarDir] = ArgValueDir
 	mapMark2Value[ArgMarkDouble] = ArgValueDouble
 	mapMark2Value[ArgMarkForce] = ArgValueForce
 	mapMark2Value[ArgMarkIgnore] = ArgValueIgnore
@@ -65,7 +62,6 @@ func init() {
 	mapMark2Value[ArgMarkStable] = ArgValueStable
 	mapMark2Value[ArgMarkUpdate] = ArgValueUpdate
 
-	mapValue2Mark[ArgValueDir] = ArgMarDir
 	mapValue2Mark[ArgValueDouble] = ArgMarkDouble
 	mapValue2Mark[ArgValueForce] = ArgMarkForce
 	mapValue2Mark[ArgValueIgnore] = ArgMarkIgnore

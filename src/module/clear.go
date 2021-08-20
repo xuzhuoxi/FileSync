@@ -14,8 +14,10 @@ func newClearExecutor() IModeExecutor {
 
 type clearExecutor struct {
 	target *infra.RuntimeTarget
-	logger logx.ILogger
 	list   pathList
+
+	logger  logx.ILogger
+	recurse bool
 }
 
 func (e *clearExecutor) Exec(src, tar, include, exclude, args string, wildcardCase bool) {
@@ -37,24 +39,25 @@ func (e *clearExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 		return
 	}
 	e.target = target
-	e.initLogger(target.ArgsMark)
+	e.initArgs()
 	e.initExecuteList()
 	e.execList()
 }
 
-func (e *clearExecutor) initLogger(mark infra.ArgMark) {
-	e.logger = infra.GenLogger(mark)
+func (e *clearExecutor) initArgs() {
+	argsMark := e.target.ArgsMark
+	e.logger = infra.GenLogger(argsMark)
+	e.recurse = argsMark.MatchArg(infra.ArgMarkRecurse)
 }
 
 func (e *clearExecutor) initExecuteList() {
-	recurse := e.target.ArgsMark.MatchArg(infra.ArgMarkRecurse)
 	for index, src := range e.target.SrcArr {
 		path := filex.Combine(infra.RunningDir, src)
 		if !filex.IsFolder(path) {
 			e.logger.Warnln(fmt.Sprintf("[clear] Ignore src[%d]: %s", index, src))
 			continue
 		}
-		e.checkPath(path, recurse)
+		e.checkPath(path)
 	}
 	e.list.Sort()
 }
@@ -69,12 +72,12 @@ func (e *clearExecutor) execList() {
 	}
 }
 
-func (e *clearExecutor) checkPath(fullPath string, recurse bool) {
-	isFile := e.checkDir(fullPath, recurse)
+func (e *clearExecutor) checkPath(fullPath string) {
+	isFile := e.checkDir(fullPath)
 	if isFile {
 		return
 	}
-	if recurse {
+	if e.recurse {
 		dirPaths, _ := filex.GetPathsInDir(fullPath, func(subPath string, info os.FileInfo) bool {
 			return info.IsDir()
 		})
@@ -82,12 +85,12 @@ func (e *clearExecutor) checkPath(fullPath string, recurse bool) {
 			return
 		}
 		for _, dir := range dirPaths {
-			e.checkPath(dir, true)
+			e.checkPath(dir)
 		}
 	}
 }
 
-func (e *clearExecutor) checkDir(fullDir string, recurse bool) (isFile bool) {
+func (e *clearExecutor) checkDir(fullDir string) (isFile bool) {
 	// 非目录
 	if !filex.IsFolder(fullDir) {
 		return true
@@ -97,7 +100,7 @@ func (e *clearExecutor) checkDir(fullDir string, recurse bool) (isFile bool) {
 	if !e.target.CheckNameFitting(filename) {
 		return false
 	}
-	if recurse {
+	if e.recurse {
 		size, _ := filex.GetFolderSize(fullDir)
 		// 非空
 		if 0 != size {

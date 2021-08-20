@@ -9,7 +9,7 @@ import (
 
 type iModuleExecutor interface {
 	// 初始化Log
-	initLogger(mark infra.ArgMark)
+	initArgs()
 	// 初始化处理列表
 	initExecuteList()
 	// 处理列表中文件

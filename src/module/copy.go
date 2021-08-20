@@ -17,13 +17,14 @@ func newCopyExecutor() IModeExecutor {
 
 type copyExecutor struct {
 	target  *infra.RuntimeTarget
-	logger  logx.ILogger
 	srcList detailPathList
 
+	logger  logx.ILogger
 	force   bool
-	recurse bool
 	ignore  bool
+	recurse bool
 	stable  bool
+	update  bool
 }
 
 func (e *copyExecutor) Exec(src, tar, include, exclude, args string, wildcardCase bool) {
@@ -45,23 +46,26 @@ func (e *copyExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 		return
 	}
 	e.target = target
-	e.initLogger(target.ArgsMark)
+	e.initArgs()
 	e.initExecuteList()
 	e.execList()
 }
 
-func (e *copyExecutor) initLogger(mark infra.ArgMark) {
-	e.logger = infra.GenLogger(mark)
+func (e *copyExecutor) initArgs() {
+	argsMark := e.target.ArgsMark
+	e.logger = infra.GenLogger(argsMark)
+	e.force = argsMark.MatchArg(infra.ArgMarkForce)
+	e.ignore = argsMark.MatchArg(infra.ArgMarkIgnore)
+	e.recurse = argsMark.MatchArg(infra.ArgMarkRecurse)
+	e.stable = argsMark.MatchArg(infra.ArgMarkStable)
+	e.update = argsMark.MatchArg(infra.ArgMarkUpdate)
 }
 
 func (e *copyExecutor) initExecuteList() {
-	argsMark := e.target.ArgsMark
-	e.force = argsMark.MatchArg(infra.ArgMarkForce)
-	e.ignore = argsMark.MatchArg(infra.ArgMarkIgnore)
-	e.stable = argsMark.MatchArg(infra.ArgMarkStable)
-	e.recurse = argsMark.MatchArg(infra.ArgMarkRecurse)
-
-	e.initSrcList()
+	for index, src := range e.target.SrcArr {
+		e.checkSrcRoot(index, src)
+	}
+	e.srcList.Sort()
 }
 
 func (e *copyExecutor) execList() {
@@ -69,13 +73,6 @@ func (e *copyExecutor) execList() {
 	for _, path := range e.srcList {
 		e.logger.Infoln(path.GetFullPath())
 	}
-}
-
-func (e *copyExecutor) initSrcList() {
-	for index, src := range e.target.SrcArr {
-		e.checkSrcRoot(index, src)
-	}
-	e.srcList.Sort()
 }
 
 func (e *copyExecutor) checkSrcRoot(rootIndex int, srcRoot string) {

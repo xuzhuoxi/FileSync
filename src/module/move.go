@@ -3,6 +3,7 @@ package module
 import (
 	"github.com/xuzhuoxi/FileSync/src/infra"
 	"github.com/xuzhuoxi/infra-go/logx"
+	"strings"
 )
 
 func newMoveExecutor() IModeExecutor {
@@ -11,8 +12,14 @@ func newMoveExecutor() IModeExecutor {
 
 type moveExecutor struct {
 	target *infra.RuntimeTarget
-	logger logx.ILogger
 	list   pathList
+
+	logger  logx.ILogger
+	force   bool
+	ignore  bool
+	recurse bool
+	stable  bool
+	update  bool
 }
 
 func (e *moveExecutor) Exec(src, tar, include, exclude, args string, wildcardCase bool) {
@@ -27,11 +34,26 @@ func (e *moveExecutor) ExecConfigTarget(config infra.ConfigTarget) {
 }
 
 func (e *moveExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
-	infra.Logger.Info("Move", target)
+	if nil == target {
+		return
+	}
+	if len(target.SrcArr) == 0 || target.Tar == "" || strings.TrimSpace(target.Tar) == "" {
+		return
+	}
+	e.target = target
+	e.initArgs()
+	e.initExecuteList()
+	e.execList()
 }
 
-func (e *moveExecutor) initLogger(mark infra.ArgMark) {
-	e.logger = infra.GenLogger(mark)
+func (e *moveExecutor) initArgs() {
+	argsMark := e.target.ArgsMark
+	e.logger = infra.GenLogger(argsMark)
+	e.force = argsMark.MatchArg(infra.ArgMarkForce)
+	e.ignore = argsMark.MatchArg(infra.ArgMarkIgnore)
+	e.recurse = argsMark.MatchArg(infra.ArgMarkRecurse)
+	e.stable = argsMark.MatchArg(infra.ArgMarkStable)
+	e.update = argsMark.MatchArg(infra.ArgMarkUpdate)
 }
 
 func (e *moveExecutor) initExecuteList() {
