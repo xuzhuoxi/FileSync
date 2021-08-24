@@ -12,17 +12,17 @@ import (
 )
 
 func newCopyExecutor() IModeExecutor {
-	return &copyExecutor{srcList: newDetailPathList(0, 128)}
+	return &copyExecutor{copyList: newDetailPathList(0, 128)}
 }
 
 type copyExecutor struct {
-	target  *infra.RuntimeTarget
-	srcList detailPathList
+	target   *infra.RuntimeTarget
+	copyList detailPathList
 
 	logger  logx.ILogger
 	ignore  bool // 处理复制列表时使用
 	recurse bool // 处理复制列表时使用
-	stable  bool // 真实复制时使用
+	stable  bool // 处理复制列表时使用
 	update  bool // 真实复制时使用
 }
 
@@ -63,38 +63,33 @@ func (e *copyExecutor) initExecuteList() {
 	for index, src := range e.target.SrcArr {
 		e.checkSrcRoot(index, src)
 	}
-	e.srcList.Sort()
+	e.copyList.Sort()
 }
 
 func (e *copyExecutor) execList() {
-	e.logger.Infoln(fmt.Sprintf("[copy] Start: Copy(len=%d).", e.srcList.Len()))
+	e.logger.Infoln(fmt.Sprintf("[copy] Start(RunningPath='%s', Len=%d).", infra.RunningDir, e.copyList.Len()))
 	count := 0
-	for _, srcInfo := range e.srcList {
-		srcFullPath := srcInfo.GetFullPath()
-		var tarFullPath string
-		if e.stable {
-			tarFullPath = filex.Combine(infra.RunningDir, e.target.Tar, srcInfo.relativePath)
-		} else {
-			tarFullPath = filex.Combine(infra.RunningDir, e.target.Tar, srcInfo.fileInfo.Name())
-		}
+	for _, copyInfo := range e.copyList {
 		// 忽略新文件
-		if e.update && !srcInfo.fileInfo.IsDir() && !compareTime(tarFullPath, srcInfo.fileInfo.ModTime()) {
+		if e.update && !copyInfo.FileInfo.IsDir() && !compareTime(copyInfo.TarAbsPath, copyInfo.FileInfo.ModTime()) {
+			e.logger.Infoln(fmt.Sprintf("[copy] Ignore by '/u': '%s'", copyInfo.SrcAbsPath))
 			continue
 		}
-		e.doCopy(srcFullPath, tarFullPath, srcInfo.fileInfo)
+		e.doCopy(copyInfo)
 		count += 1
 	}
-	e.logger.Infoln(fmt.Sprintf("[copy] Finish: Copy(len=%d), Ignore(len=%d).", count, e.srcList.Len()-count))
+	ignoreLen := e.copyList.Len() - count
+	e.logger.Infoln(fmt.Sprintf("[copy] Finish(CopyLen=%d, IgnoreLen=%d).", count, ignoreLen))
 }
 
-func (e *copyExecutor) doCopy(srcFullPath, tarFullPath string, srcFileInfo os.FileInfo) {
-	e.logger.Infoln(fmt.Sprintf("[copy] Copy file '%s' \n\t\t=> '%s'", srcFullPath, tarFullPath))
-	if srcFileInfo.IsDir() {
-		os.MkdirAll(tarFullPath, srcFileInfo.Mode())
+func (e *copyExecutor) doCopy(copyInfo detailPath) {
+	e.logger.Infoln(fmt.Sprintf("[copy] Copy '%s' => '%s'", copyInfo.SrcRelativePath, copyInfo.TarRelativePath))
+	if copyInfo.FileInfo.IsDir() {
+		os.MkdirAll(copyInfo.TarAbsPath, copyInfo.FileInfo.Mode())
 	} else {
-		filex.CopyAuto(srcFullPath, tarFullPath, srcFileInfo.Mode())
+		filex.CopyAuto(copyInfo.SrcAbsPath, copyInfo.TarAbsPath, copyInfo.FileInfo.Mode())
 	}
-	cloneTime(tarFullPath, srcFileInfo)
+	cloneTime(copyInfo.TarAbsPath, copyInfo.FileInfo)
 }
 
 func (e *copyExecutor) checkSrcRoot(rootIndex int, srcRoot string) {
@@ -136,8 +131,7 @@ func (e *copyExecutor) checkFile(rootIndex int, relativeBase string, relativePat
 	if !e.target.CheckNameFitting(fileInfo.Name()) {
 		return
 	}
-	detail := detailPath{index: rootIndex, relativeBase: relativeBase, relativePath: relativePath, fileInfo: fileInfo}
-	e.srcList = append(e.srcList, detail)
+	e.appendPath(rootIndex, relativeBase, relativePath, fileInfo)
 }
 
 func (e *copyExecutor) checkDir(rootIndex int, relativeBase string, relativePath string, fileInfo os.FileInfo) {
@@ -170,7 +164,20 @@ func (e *copyExecutor) checkDir(rootIndex int, relativeBase string, relativePath
 	}
 }
 
-func (e *copyExecutor) appendPath(rootIndex int, relativeBase string, relativePath string, fileInfo os.FileInfo) {
-	detail := detailPath{index: rootIndex, relativeBase: relativeBase, relativePath: relativePath, fileInfo: fileInfo}
-	e.srcList = append(e.srcList, detail)
+func (e *copyExecutor) appendPath(rootIndex int, srcRoot string, relativePath string, fileInfo os.FileInfo) {
+	srcRelativePath := filex.Combine(srcRoot, relativePath)
+	srcAbsPath := filex.Combine(infra.RunningDir, srcRelativePath)
+	var tarRelativePath string
+	if e.stable {
+		tarRelativePath = filex.Combine(e.target.Tar, relativePath)
+	} else {
+		tarRelativePath = filex.Combine(e.target.Tar, fileInfo.Name())
+	}
+	tarAbsPath := filex.Combine(infra.RunningDir, tarRelativePath)
+
+	detail := detailPath{
+		Index: rootIndex, SrcRoot: srcRoot, RelativePath: relativePath, FileInfo: fileInfo,
+		SrcRelativePath: srcRelativePath, SrcAbsPath: srcAbsPath,
+		TarRelativePath: tarRelativePath, TarAbsPath: tarAbsPath}
+	e.copyList = append(e.copyList, detail)
 }

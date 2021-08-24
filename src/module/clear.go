@@ -67,7 +67,7 @@ func (e *clearExecutor) execList() {
 		return
 	}
 	for _, dir := range e.list {
-		e.logger.Infoln("[clear] Clear Folder:", dir)
+		e.logger.Infoln(fmt.Sprintf("[clear] Clear Folder='%s'", dir))
 		os.RemoveAll(dir)
 	}
 }

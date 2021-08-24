@@ -2,7 +2,6 @@ package module
 
 import (
 	"errors"
-	"github.com/xuzhuoxi/FileSync/src/infra"
 	"github.com/xuzhuoxi/infra-go/filex"
 	"io/fs"
 	"os"
@@ -47,14 +46,16 @@ func (l pathList) Swap(i, j int) {
 func (l pathList) Sort() { sort.Sort(l) }
 
 type detailPath struct {
-	index        int
-	relativeBase string
-	relativePath string
-	fileInfo     fs.FileInfo
-}
+	Index        int
+	SrcRoot      string // Src根目录
+	RelativePath string // 对应以src为根目录的相对路径
+	FileInfo     fs.FileInfo
 
-func (dp detailPath) GetFullPath() string {
-	return filex.Combine(infra.RunningDir, dp.relativeBase, dp.relativePath)
+	SrcRelativePath string // 运行时源相对路径
+	TarRelativePath string // 运行时目录相对路径
+
+	SrcAbsPath string // 源绝对路径
+	TarAbsPath string // 目标绝对路径
 }
 
 func newDetailPathList(ln int, cap int) detailPathList {
@@ -68,15 +69,15 @@ func (l detailPathList) Len() int {
 }
 
 func (l detailPathList) Less(i, j int) bool {
-	if l[i].index != l[j].index {
-		return l[i].index < l[j].index
+	if l[i].Index != l[j].Index {
+		return l[i].Index < l[j].Index
 	}
-	lenI := getRuneCount(l[i].relativePath, filex.UnixSeparator)
-	lenJ := getRuneCount(l[j].relativePath, filex.UnixSeparator)
+	lenI := getRuneCount(l[i].SrcRelativePath, filex.UnixSeparator)
+	lenJ := getRuneCount(l[j].SrcRelativePath, filex.UnixSeparator)
 	if lenI != lenJ {
 		return lenI > lenJ
 	}
-	return l[i].relativePath < l[j].relativePath
+	return l[i].SrcRelativePath < l[j].SrcRelativePath
 }
 
 func (l detailPathList) Swap(i, j int) {
