@@ -1,10 +1,13 @@
 package module
 
 import (
+	"errors"
 	"github.com/xuzhuoxi/FileSync/src/infra"
 	"github.com/xuzhuoxi/infra-go/filex"
 	"io/fs"
+	"os"
 	"sort"
+	"time"
 )
 
 type iModuleExecutor interface {
@@ -91,4 +94,17 @@ func getRuneCount(str string, r rune) int {
 		}
 	}
 	return rs
+}
+
+func cloneTime(tarPath string, srcInfo os.FileInfo) {
+	os.Chtimes(tarPath, srcInfo.ModTime(), srcInfo.ModTime())
+}
+
+func compareTime(tarPath string, mt time.Time) bool {
+	fileInfo, err := os.Stat(tarPath)
+	// 不存在
+	if err != nil && !errors.Is(err, os.ErrExist) {
+		return true
+	}
+	return fileInfo.ModTime().UnixNano() < mt.UnixNano()
 }

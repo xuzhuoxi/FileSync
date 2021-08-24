@@ -20,15 +20,14 @@ type copyExecutor struct {
 	srcList detailPathList
 
 	logger  logx.ILogger
-	force   bool
-	ignore  bool
-	recurse bool
-	stable  bool
-	update  bool
+	ignore  bool // 处理复制列表时使用
+	recurse bool // 处理复制列表时使用
+	stable  bool // 真实复制时使用
+	update  bool // 真实复制时使用
 }
 
 func (e *copyExecutor) Exec(src, tar, include, exclude, args string, wildcardCase bool) {
-	config := infra.ConfigTarget{Name: "Clear", Mode: infra.ModeClearValue, Src: src,
+	config := infra.ConfigTarget{Name: "Copy", Mode: infra.ModeCopyValue, Src: src,
 		Include: include, Exclude: exclude, Args: args, Case: wildcardCase}
 	e.ExecConfigTarget(config)
 }
@@ -54,7 +53,6 @@ func (e *copyExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 func (e *copyExecutor) initArgs() {
 	argsMark := e.target.ArgsMark
 	e.logger = infra.GenLogger(argsMark)
-	e.force = argsMark.MatchArg(infra.ArgMarkForce)
 	e.ignore = argsMark.MatchArg(infra.ArgMarkIgnore)
 	e.recurse = argsMark.MatchArg(infra.ArgMarkRecurse)
 	e.stable = argsMark.MatchArg(infra.ArgMarkStable)
@@ -69,10 +67,34 @@ func (e *copyExecutor) initExecuteList() {
 }
 
 func (e *copyExecutor) execList() {
-	e.logger.Infoln("execList:", e.srcList.Len())
-	for _, path := range e.srcList {
-		e.logger.Infoln(path.GetFullPath())
+	e.logger.Infoln(fmt.Sprintf("[copy] Start: Copy(len=%d).", e.srcList.Len()))
+	count := 0
+	for _, srcInfo := range e.srcList {
+		srcFullPath := srcInfo.GetFullPath()
+		var tarFullPath string
+		if e.stable {
+			tarFullPath = filex.Combine(infra.RunningDir, e.target.Tar, srcInfo.relativePath)
+		} else {
+			tarFullPath = filex.Combine(infra.RunningDir, e.target.Tar, srcInfo.fileInfo.Name())
+		}
+		// 忽略新文件
+		if e.update && !srcInfo.fileInfo.IsDir() && !compareTime(tarFullPath, srcInfo.fileInfo.ModTime()) {
+			continue
+		}
+		e.doCopy(srcFullPath, tarFullPath, srcInfo.fileInfo)
+		count += 1
 	}
+	e.logger.Infoln(fmt.Sprintf("[copy] Finish: Copy(len=%d), Ignore(len=%d).", count, e.srcList.Len()-count))
+}
+
+func (e *copyExecutor) doCopy(srcFullPath, tarFullPath string, srcFileInfo os.FileInfo) {
+	e.logger.Infoln(fmt.Sprintf("[copy] Copy file '%s' \n\t\t=> '%s'", srcFullPath, tarFullPath))
+	if srcFileInfo.IsDir() {
+		os.MkdirAll(tarFullPath, srcFileInfo.Mode())
+	} else {
+		filex.CopyAuto(srcFullPath, tarFullPath, srcFileInfo.Mode())
+	}
+	cloneTime(tarFullPath, srcFileInfo)
 }
 
 func (e *copyExecutor) checkSrcRoot(rootIndex int, srcRoot string) {

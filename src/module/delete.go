@@ -21,7 +21,7 @@ type deleteExecutor struct {
 }
 
 func (e *deleteExecutor) Exec(src, tar, include, exclude, args string, wildcardCase bool) {
-	config := infra.ConfigTarget{Name: "Clear", Mode: infra.ModeClearValue, Src: src,
+	config := infra.ConfigTarget{Name: "Delete", Mode: infra.ModeDeleteValue, Src: src,
 		Include: include, Exclude: exclude, Args: args, Case: wildcardCase}
 	e.ExecConfigTarget(config)
 }

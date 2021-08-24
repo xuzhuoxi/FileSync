@@ -22,7 +22,7 @@ type syncExecutor struct {
 }
 
 func (e *syncExecutor) Exec(src, tar, include, exclude, args string, wildcardCase bool) {
-	config := infra.ConfigTarget{Name: "Clear", Mode: infra.ModeClearValue, Src: src,
+	config := infra.ConfigTarget{Name: "Sync", Mode: infra.ModeSyncValue, Src: src,
 		Include: include, Exclude: exclude, Args: args, Case: wildcardCase}
 	e.ExecConfigTarget(config)
 }

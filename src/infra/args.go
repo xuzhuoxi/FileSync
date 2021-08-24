@@ -2,7 +2,6 @@ package infra
 
 const (
 	ArgValueDouble  = "/d" //双向
-	ArgValueForce   = "/f" //强制(force)，若有重复或其它疑问时，不会询问用户，而强制复制
 	ArgValueIgnore  = "/i" //忽略空目录
 	ArgValueLog     = "/L" //记录日志
 	ArgValueConsole = "/l" //控制台打印信息
@@ -17,7 +16,6 @@ type ArgMark int
 
 const (
 	ArgMarkDouble ArgMark = 1 << iota
-	ArgMarkForce
 	ArgMarkIgnore
 	ArgMarkLogFile
 	ArgMarkLogConsole
@@ -28,18 +26,18 @@ const (
 
 const (
 	ClearArgMark  = ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse
-	CopyArgMark   = ArgMarkForce | ArgMarkIgnore | ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse | ArgMarkStable | ArgMarkUpdate
+	CopyArgMark   = ArgMarkIgnore | ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse | ArgMarkStable | ArgMarkUpdate
 	DeleteArgMark = ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse
-	MoveArgMark   = ArgMarkForce | ArgMarkIgnore | ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse | ArgMarkStable | ArgMarkUpdate
+	MoveArgMark   = ArgMarkIgnore | ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse | ArgMarkStable | ArgMarkUpdate
 	SyncArgMark   = ArgMarkIgnore | ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse | ArgMarkUpdate
 )
 
 var (
 	ClearArgs = []string{ArgValueLog, ArgValueConsole, ArgValueRecurse}
-	CopyArgs  = []string{ArgValueForce, ArgValueIgnore, ArgValueLog, ArgValueConsole,
+	CopyArgs  = []string{ArgValueIgnore, ArgValueLog, ArgValueConsole,
 		ArgValueRecurse, ArgValueStable, ArgValueUpdate}
 	DeleteArgs = []string{ArgValueIgnore, ArgValueLog, ArgValueConsole, ArgValueRecurse}
-	MoveArgs   = []string{ArgValueForce, ArgValueIgnore, ArgValueLog, ArgValueConsole,
+	MoveArgs   = []string{ArgValueIgnore, ArgValueLog, ArgValueConsole,
 		ArgValueRecurse, ArgValueStable, ArgValueUpdate}
 	SyncArgs = []string{ArgValueDouble, ArgValueIgnore, ArgValueLog,
 		ArgValueConsole, ArgValueRecurse, ArgValueUpdate}
@@ -54,7 +52,6 @@ var (
 
 func init() {
 	mapMark2Value[ArgMarkDouble] = ArgValueDouble
-	mapMark2Value[ArgMarkForce] = ArgValueForce
 	mapMark2Value[ArgMarkIgnore] = ArgValueIgnore
 	mapMark2Value[ArgMarkLogFile] = ArgValueLog
 	mapMark2Value[ArgMarkLogConsole] = ArgValueConsole
@@ -63,7 +60,6 @@ func init() {
 	mapMark2Value[ArgMarkUpdate] = ArgValueUpdate
 
 	mapValue2Mark[ArgValueDouble] = ArgMarkDouble
-	mapValue2Mark[ArgValueForce] = ArgMarkForce
 	mapValue2Mark[ArgValueIgnore] = ArgMarkIgnore
 	mapValue2Mark[ArgValueLog] = ArgMarkLogFile
 	mapValue2Mark[ArgValueConsole] = ArgMarkLogConsole
