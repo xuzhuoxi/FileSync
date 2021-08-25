@@ -1,6 +1,7 @@
 package module
 
 import (
+	"fmt"
 	"github.com/xuzhuoxi/FileSync/src/infra"
 	"github.com/xuzhuoxi/infra-go/logx"
 	"strings"
@@ -28,7 +29,10 @@ func (e *syncExecutor) Exec(src, tar, include, exclude, args string, wildcardCas
 }
 
 func (e *syncExecutor) ExecConfigTarget(config infra.ConfigTarget) {
-	runtimeTarget := infra.NewRuntimeTarget(config)
+	runtimeTarget, err := infra.NewRuntimeTarget(config)
+	if nil != err {
+		e.logger.Errorln(fmt.Sprintf("[sync] Err : %v", err))
+	}
 	e.ExecRuntimeTarget(runtimeTarget)
 }
 

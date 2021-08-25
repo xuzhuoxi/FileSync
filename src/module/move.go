@@ -1,7 +1,6 @@
 package module
 
 import (
-	"errors"
 	"fmt"
 	"github.com/xuzhuoxi/FileSync/src/infra"
 	"github.com/xuzhuoxi/infra-go/filex"
@@ -33,7 +32,10 @@ func (e *moveExecutor) Exec(src, tar, include, exclude, args string, wildcardCas
 }
 
 func (e *moveExecutor) ExecConfigTarget(config infra.ConfigTarget) {
-	runtimeTarget := infra.NewRuntimeTarget(config)
+	runtimeTarget, err := infra.NewRuntimeTarget(config)
+	if nil != err {
+		e.logger.Errorln(fmt.Sprintf("[move] Err : %v", err))
+	}
 	e.ExecRuntimeTarget(runtimeTarget)
 }
 
@@ -70,7 +72,8 @@ func (e *moveExecutor) execList() {
 	e.logger.Infoln(fmt.Sprintf("[move] Start(RunningPath='%s', Len=%d).", infra.RunningDir, e.moveList.Len()))
 	count := 0
 	for _, moveInfo := range e.moveList {
-		if moveInfo.FileInfo.IsDir() { // 忽略目录
+		// 忽略目录
+		if moveInfo.FileInfo.IsDir() {
 			continue
 		}
 		// 忽略新文件
@@ -82,10 +85,15 @@ func (e *moveExecutor) execList() {
 		count += 1
 	}
 	for _, moveInfo := range e.moveList {
-		if !moveInfo.FileInfo.IsDir() { //忽略文件
+		// 忽略文件
+		if !moveInfo.FileInfo.IsDir() {
 			continue
 		}
-		// 当前目录不为空
+		// 忽略非空目录
+		if !filex.IsEmptyDir(moveInfo.SrcAbsPath) {
+			continue
+		}
+		// 忽略新目录
 		if e.update && !compareTime(moveInfo.TarAbsPath, moveInfo.FileInfo.ModTime()) {
 			continue
 		}
@@ -103,6 +111,7 @@ func (e *moveExecutor) doMoveFile(moveInfo detailPath) {
 		os.MkdirAll(moveInfo.TarAbsPath, moveInfo.FileInfo.Mode())
 		cloneTime(moveInfo.TarAbsPath, moveInfo.FileInfo)
 	} else {
+		filex.CompletePath(moveInfo.TarAbsPath, moveInfo.FileInfo.Mode())
 		os.Rename(moveInfo.SrcAbsPath, moveInfo.TarAbsPath)
 	}
 }
@@ -118,91 +127,89 @@ func (e *moveExecutor) doMoveDir(moveInfo detailPath) {
 	}
 }
 
-func (e *moveExecutor) checkSrcRoot(rootIndex int, srcRoot string) {
-	dir, fileName := filex.Split(srcRoot)
-	// 名称不匹配
-	if !e.target.CheckNameFitting(fileName) {
-		return
-	}
-	fullSrcRoot := filex.Combine(infra.RunningDir, srcRoot)
+func (e *moveExecutor) checkSrcRoot(rootIndex int, srcInfo infra.SrcInfo) {
+	fullSrcRoot := filex.Combine(infra.RunningDir, srcInfo.FormattedSrc)
 	fileInfo, err := os.Stat(fullSrcRoot)
-	// 不存在
-	if err != nil && !errors.Is(err, os.ErrExist) {
-		e.logger.Warnln(fmt.Sprintf("[copy] Ignore src[%d]: %s", rootIndex, srcRoot))
+	if err != nil && !os.IsExist(err) { //不存在
+		e.logger.Warnln(fmt.Sprintf("[copy] Ignore src[%d]: %s", rootIndex, srcInfo.OriginalSrc))
 		return
 	}
-	// 文件
-	if !fileInfo.IsDir() {
-		e.appendPath(rootIndex, dir, fileName, fileInfo)
+
+	if !fileInfo.IsDir() { // 文件
+		e.checkFile(rootIndex, srcInfo, "", fileInfo)
 		return
 	}
+
 	// 目录
-	subPaths, _ := ioutil.ReadDir(fullSrcRoot)
-	// 真空目录
-	if len(subPaths) == 0 {
-		return
-	}
-	// 遍历
-	for _, info := range subPaths {
-		if info.IsDir() {
-			e.checkDir(rootIndex, srcRoot, info.Name(), info)
-		} else {
-			e.checkFile(rootIndex, srcRoot, info.Name(), info)
-		}
+	if srcInfo.IncludeSelf {
+		e.checkDir(rootIndex, srcInfo, "", fileInfo)
+	} else {
+		e.checkSubDir(rootIndex, srcInfo, "")
 	}
 }
 
-func (e *moveExecutor) checkFile(rootIndex int, relativeBase string, relativePath string, fileInfo os.FileInfo) {
+func (e *moveExecutor) checkDir(rootIndex int, srcInfo infra.SrcInfo, srcRelativePath string, fileInfo os.FileInfo) {
 	// 名称不匹配
-	if !e.target.CheckNameFitting(fileInfo.Name()) {
+	if !e.target.CheckDirFitting(fileInfo.Name()) {
 		return
 	}
-	e.appendPath(rootIndex, relativeBase, relativePath, fileInfo)
-}
-
-func (e *moveExecutor) checkDir(rootIndex int, relativeBase string, relativePath string, fileInfo os.FileInfo) {
-	// 名称不匹配
-	if !e.target.CheckNameFitting(fileInfo.Name()) {
-		return
-	}
-	// 不忽略空目录
+	// 不忽略空目录，把目录都加入到列表中
 	if !e.ignore {
-		e.appendPath(rootIndex, relativeBase, relativePath, fileInfo)
-	}
-	fullPath := filex.Combine(infra.RunningDir, relativeBase, relativePath)
-	subPaths, _ := ioutil.ReadDir(fullPath)
-	// 真空目录
-	if len(subPaths) == 0 {
-		return
+		e.appendPath(rootIndex, srcInfo, srcRelativePath, fileInfo)
 	}
 	// 不递归
 	if !e.recurse {
 		return
 	}
+	e.checkSubDir(rootIndex, srcInfo, srcRelativePath)
+}
+func (e *moveExecutor) checkSubDir(rootIndex int, srcInfo infra.SrcInfo, srcRelativePath string) {
+	fullPath := filex.Combine(infra.RunningDir, srcInfo.FormattedSrc, srcRelativePath)
+	subPaths, _ := ioutil.ReadDir(fullPath)
+	// 真空目录
+	if len(subPaths) == 0 {
+		return
+	}
 	// 遍历
 	for _, info := range subPaths {
-		rp := filex.Combine(relativePath, info.Name())
+		rp := filex.Combine(srcRelativePath, info.Name())
 		if info.IsDir() {
-			e.checkDir(rootIndex, relativeBase, rp, info)
+			e.checkDir(rootIndex, srcInfo, rp, info)
 		} else {
-			e.checkFile(rootIndex, relativeBase, rp, info)
+			e.checkFile(rootIndex, srcInfo, rp, info)
 		}
 	}
 }
 
-func (e *moveExecutor) appendPath(rootIndex int, srcRoot string, relativePath string, fileInfo os.FileInfo) {
-	srcRelativePath := filex.Combine(srcRoot, relativePath)
+func (e *moveExecutor) checkFile(rootIndex int, srcInfo infra.SrcInfo, srcRelativePath string, fileInfo os.FileInfo) {
+	if !srcInfo.CheckFitting(fileInfo.Name()) { // 路径匹配不成功
+		return
+	}
+	// 名称不匹配
+	if !e.target.CheckFileFitting(fileInfo.Name()) {
+		return
+	}
+	e.appendPath(rootIndex, srcInfo, srcRelativePath, fileInfo)
+}
+
+func (e *moveExecutor) appendPath(rootIndex int, srcInfo infra.SrcInfo, relativePath string, fileInfo os.FileInfo) {
+	srcRelativePath := filex.Combine(srcInfo.FormattedSrc, relativePath)
 	srcAbsPath := filex.Combine(infra.RunningDir, srcRelativePath)
 	var tarRelativePath string
-	if e.stable {
-		tarRelativePath = filex.Combine(e.target.Tar, relativePath)
-	} else {
+	if e.stable { // 保持目录
+		if srcInfo.IncludeSelf { // 包含源目录
+			_, selfName := filex.Split(srcInfo.FormattedSrc)
+			tarRelativePath = filex.Combine(e.target.Tar, selfName, relativePath)
+		} else { // 不包含源目录
+			tarRelativePath = filex.Combine(e.target.Tar, relativePath)
+		}
+	} else { // 不保持目录
 		tarRelativePath = filex.Combine(e.target.Tar, fileInfo.Name())
 	}
 	tarAbsPath := filex.Combine(infra.RunningDir, tarRelativePath)
 
 	detail := detailPath{
-		Index: rootIndex, SrcRoot: srcRoot, RelativePath: relativePath, FileInfo: fileInfo,
+		Index: rootIndex, SrcInfo: srcInfo, FileInfo: fileInfo,
 		SrcRelativePath: srcRelativePath, SrcAbsPath: srcAbsPath,
 		TarRelativePath: tarRelativePath, TarAbsPath: tarAbsPath}
 	e.moveList = append(e.moveList, detail)

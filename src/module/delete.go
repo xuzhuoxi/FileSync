@@ -27,7 +27,10 @@ func (e *deleteExecutor) Exec(src, tar, include, exclude, args string, wildcardC
 }
 
 func (e *deleteExecutor) ExecConfigTarget(config infra.ConfigTarget) {
-	runtimeTarget := infra.NewRuntimeTarget(config)
+	runtimeTarget, err := infra.NewRuntimeTarget(config)
+	if nil != err {
+		e.logger.Errorln(fmt.Sprintf("[delete] Err : %v", err))
+	}
 	e.ExecRuntimeTarget(runtimeTarget)
 }
 
@@ -52,12 +55,16 @@ func (e *deleteExecutor) initArgs() {
 
 func (e *deleteExecutor) initExecuteList() {
 	for index, src := range e.target.SrcArr {
-		path := filex.Combine(infra.RunningDir, src)
+		path := filex.Combine(infra.RunningDir, src.FormattedSrc)
 		if !filex.IsExist(path) {
-			e.logger.Warnln(fmt.Sprintf("[clear] Ignore src[%d]: %s", index, src))
+			e.logger.Warnln(fmt.Sprintf("[clear] Ignore src[%d]: %s", index, src.OriginalSrc))
 			continue
 		}
-		e.checkPath(path)
+		if src.IncludeSelf {
+			e.checkPath(path, src)
+		} else {
+			e.checkSubPath(path, src)
+		}
 	}
 	e.list.Sort()
 }
@@ -72,29 +79,41 @@ func (e *deleteExecutor) execList() {
 	}
 }
 
-func (e *deleteExecutor) checkPath(fullPath string) {
-	match := e.checkName(fullPath)
-
-	if match {
+func (e *deleteExecutor) checkPath(fullPath string, srcInfo infra.SrcInfo) {
+	if filex.IsFile(fullPath) { // 处理文件
+		e.checkFileName(fullPath, srcInfo)
 		return
 	}
-	if e.recurse && filex.IsFolder(fullPath) {
-		subPaths, _ := filex.GetPathsInDir(fullPath, nil)
-		if len(subPaths) == 0 {
-			return
-		}
-		for _, dir := range subPaths {
-			e.checkPath(dir)
-		}
+	if !e.recurse { // 非递归
+		return
+	}
+	_, filename := filex.Split(fullPath)
+	if !e.target.CheckDirFitting(filename) { // 过滤不匹配目录
+		return
+	}
+	e.checkSubPath(fullPath, srcInfo)
+}
+
+func (e *deleteExecutor) checkSubPath(fullPath string, srcInfo infra.SrcInfo) {
+	subPaths, _ := filex.GetPathsInDir(fullPath, nil)
+	if len(subPaths) == 0 {
+		return
+	}
+	for _, dir := range subPaths {
+		e.checkPath(dir, srcInfo)
 	}
 }
 
-func (e *deleteExecutor) checkName(fullPath string) bool {
+func (e *deleteExecutor) checkFileName(fullPath string, srcInfo infra.SrcInfo) {
 	_, filename := filex.Split(fullPath)
+	// 路径通配符不匹配
+	if !srcInfo.CheckFitting(filename) {
+		return
+	}
 	// 名称不匹配
-	if !e.target.CheckNameFitting(filename) {
-		return false
+	if !e.target.CheckFileFitting(filename) {
+		return
 	}
 	e.list = append(e.list, fullPath)
-	return true
+	return
 }

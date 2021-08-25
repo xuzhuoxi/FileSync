@@ -9,18 +9,19 @@ import (
 )
 
 const (
-	WildcardSep = ","
+	PathListSeparatorStr = filex.PathListSeparatorStr
+	DirSeparatorStr      = filex.UnixSeparatorStr
 )
 
 type ConfigTarget struct {
-	Name    string `yaml:"name"`
-	Mode    string `yaml:"mode"`
-	Src     string `yaml:"src"`
-	Tar     string `yaml:"tar"`
-	Include string `yaml:"include"`
-	Exclude string `yaml:"exclude"`
-	Args    string `yaml:"args"`
-	Case    bool   `yaml:"case"`
+	Name    string `yaml:"name"`    // 任务名称，用于唯一标识配置
+	Mode    string `yaml:"mode"`    // 任务模式，RuntimeMode相应的string值
+	Src     string `yaml:"src"`     // 任务源路径，多个用";"分隔
+	Tar     string `yaml:"tar"`     // 任务目标路径，单一目标
+	Include string `yaml:"include"` // 处理包含的文件名通配符
+	Exclude string `yaml:"exclude"` // 处理排除的文件名通配符
+	Args    string `yaml:"args"`    // 任务管理参数
+	Case    bool   `yaml:"case"`    // 是否匹配大小写
 }
 
 func (ct ConfigTarget) String() string {
@@ -32,22 +33,27 @@ func (ct ConfigTarget) GetMode() RuntimeMode {
 	return GetMode(ct.Mode)
 }
 
-func (ct ConfigTarget) GetSrcArr() []string {
+func (ct ConfigTarget) GetSrcArr() []SrcInfo {
 	if ct.Src == "" {
 		return nil
 	}
-	if !strings.Contains(ct.Src, filex.PathListSeparatorStr) {
-		return []string{ct.Src}
+	if !strings.Contains(ct.Src, PathListSeparatorStr) {
+		return []SrcInfo{NewSrcInfo(ct.Src, ct.Case)}
 	}
-	return strings.Split(ct.Src, filex.PathListSeparatorStr)
+	srcArr := strings.Split(ct.Src, PathListSeparatorStr)
+	rs := make([]SrcInfo, len(srcArr))
+	for index := range srcArr {
+		rs[index] = NewSrcInfo(srcArr[index], ct.Case)
+	}
+	return rs
 }
 
-func (ct ConfigTarget) GetIncludeArr() []string {
-	return ct.splitWildcard(ct.Include)
+func (ct ConfigTarget) GetIncludeArr() (fws []Wildcard, dws []Wildcard, err error) {
+	return ParseWildcards(ct.Include)
 }
 
-func (ct ConfigTarget) GetExcludeArr() []string {
-	return ct.splitWildcard(ct.Exclude)
+func (ct ConfigTarget) GetExcludeArr() (fws []Wildcard, dws []Wildcard, err error) {
+	return ParseWildcards(ct.Exclude)
 }
 
 func (ct ConfigTarget) CheckTarget() (err error) {
@@ -72,16 +78,6 @@ func (ct ConfigTarget) CheckTarget() (err error) {
 
 func (ct ConfigTarget) GetArgsMark() ArgMark {
 	return ValuesToMarks(ct.Args)
-}
-
-func (ct ConfigTarget) splitWildcard(value string) []string {
-	if value == "" {
-		return nil
-	}
-	if !strings.Contains(value, WildcardSep) {
-		return []string{value}
-	}
-	return strings.Split(value, WildcardSep)
 }
 
 type ConfigGroup struct {
@@ -164,10 +160,10 @@ func checkSrc(srcValue string) (err error) {
 	if "" == srcValue || "" == strings.TrimSpace(srcValue) {
 		return errors.New(fmt.Sprintf("Src Empty! "))
 	}
-	if !strings.Contains(srcValue, filex.PathListSeparatorStr) {
+	if !strings.Contains(srcValue, PathListSeparatorStr) {
 		return nil
 	}
-	srcArr := strings.Split(srcValue, filex.PathListSeparatorStr)
+	srcArr := strings.Split(srcValue, PathListSeparatorStr)
 	for index := range srcArr {
 		if "" == srcArr[index] || "" == strings.TrimSpace(srcArr[index]) {
 			return errors.New(fmt.Sprintf("Src[%d] Empty! ", index))
@@ -180,7 +176,7 @@ func checkTar(tarValue string) (err error) {
 	if "" == tarValue || "" == strings.TrimSpace(tarValue) {
 		return errors.New(fmt.Sprintf("Tar Empty! "))
 	}
-	if strings.Contains(tarValue, filex.PathListSeparatorStr) {
+	if strings.Contains(tarValue, PathListSeparatorStr) {
 		return errors.New(fmt.Sprintf("Tar does not support multi paths! "))
 	}
 	return nil

@@ -27,7 +27,10 @@ func (e *clearExecutor) Exec(src, tar, include, exclude, args string, wildcardCa
 }
 
 func (e *clearExecutor) ExecConfigTarget(cfgTarget infra.ConfigTarget) {
-	runtimeTarget := infra.NewRuntimeTarget(cfgTarget)
+	runtimeTarget, err := infra.NewRuntimeTarget(cfgTarget)
+	if nil != err {
+		e.logger.Errorln(fmt.Sprintf("[clear] Err : %v", err))
+	}
 	e.ExecRuntimeTarget(runtimeTarget)
 }
 
@@ -52,12 +55,16 @@ func (e *clearExecutor) initArgs() {
 
 func (e *clearExecutor) initExecuteList() {
 	for index, src := range e.target.SrcArr {
-		path := filex.Combine(infra.RunningDir, src)
+		path := filex.Combine(infra.RunningDir, src.FormattedSrc)
 		if !filex.IsFolder(path) {
-			e.logger.Warnln(fmt.Sprintf("[clear] Ignore src[%d]: %s", index, src))
+			e.logger.Warnln(fmt.Sprintf("[clear] Ignore src[%d]: %s", index, src.OriginalSrc))
 			continue
 		}
-		e.checkPath(path)
+		if src.IncludeSelf {
+			e.checkPath(path, src)
+		} else {
+			e.CheckSubDir(path, src)
+		}
 	}
 	e.list.Sort()
 }
@@ -72,32 +79,41 @@ func (e *clearExecutor) execList() {
 	}
 }
 
-func (e *clearExecutor) checkPath(fullPath string) {
-	isFile := e.checkDir(fullPath)
+func (e *clearExecutor) checkPath(fullPath string, srcInfo infra.SrcInfo) {
+	isFile := e.checkDir(fullPath, srcInfo)
 	if isFile {
 		return
 	}
-	if e.recurse {
-		dirPaths, _ := filex.GetPathsInDir(fullPath, func(subPath string, info os.FileInfo) bool {
-			return info.IsDir()
-		})
-		if len(dirPaths) == 0 {
-			return
-		}
-		for _, dir := range dirPaths {
-			e.checkPath(dir)
-		}
+	if !e.recurse {
+		return
+	}
+	e.CheckSubDir(fullPath, srcInfo)
+}
+
+func (e *clearExecutor) CheckSubDir(fullDir string, srcInfo infra.SrcInfo) {
+	dirPaths, _ := filex.GetPathsInDir(fullDir, func(subPath string, info os.FileInfo) bool {
+		return info.IsDir()
+	})
+	if len(dirPaths) == 0 {
+		return
+	}
+	for _, dir := range dirPaths {
+		e.checkPath(dir, srcInfo)
 	}
 }
 
-func (e *clearExecutor) checkDir(fullDir string) (isFile bool) {
+func (e *clearExecutor) checkDir(fullDir string, srcInfo infra.SrcInfo) (isFile bool) {
 	// 非目录
 	if !filex.IsFolder(fullDir) {
 		return true
 	}
 	_, filename := filex.Split(fullDir)
+	// 路径通配符不匹配
+	if !srcInfo.CheckFitting(filename) {
+		return false
+	}
 	// 名称不匹配
-	if !e.target.CheckNameFitting(filename) {
+	if !e.target.CheckDirFitting(filename) {
 		return false
 	}
 	if e.recurse {

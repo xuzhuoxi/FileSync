@@ -2,6 +2,7 @@ package module
 
 import (
 	"errors"
+	"github.com/xuzhuoxi/FileSync/src/infra"
 	"github.com/xuzhuoxi/infra-go/filex"
 	"io/fs"
 	"os"
@@ -46,16 +47,15 @@ func (l pathList) Swap(i, j int) {
 func (l pathList) Sort() { sort.Sort(l) }
 
 type detailPath struct {
-	Index        int
-	SrcRoot      string // Src根目录
-	RelativePath string // 对应以src为根目录的相对路径
-	FileInfo     fs.FileInfo
+	Index    int
+	SrcInfo  infra.SrcInfo // Src信息
+	FileInfo fs.FileInfo
 
-	SrcRelativePath string // 运行时源相对路径
-	TarRelativePath string // 运行时目录相对路径
+	SrcRelativePath string // 运行时 源 相对路径
+	TarRelativePath string // 运行时 目录 相对路径
 
-	SrcAbsPath string // 源绝对路径
-	TarAbsPath string // 目标绝对路径
+	SrcAbsPath string // 源 绝对路径
+	TarAbsPath string // 目标 绝对路径
 }
 
 func newDetailPathList(ln int, cap int) detailPathList {
