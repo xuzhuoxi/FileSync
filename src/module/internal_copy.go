@@ -7,16 +7,10 @@ import (
 	"github.com/xuzhuoxi/infra-go/logx"
 	"io/ioutil"
 	"os"
-	"strings"
 )
 
-func newCopyExecutor() IModeExecutor {
-	return &copyExecutor{copyList: newDetailPathList(0, 128)}
-}
-
-type copyExecutor struct {
-	target *infra.RuntimeTarget
-
+type copyListSearcher struct {
+	target  *infra.RuntimeTarget
 	logger  logx.ILogger
 	ignore  bool // 处理复制列表时使用
 	recurse bool // 处理复制列表时使用
@@ -26,34 +20,7 @@ type copyExecutor struct {
 	copyList detailPathList
 }
 
-func (e *copyExecutor) Exec(src, tar, include, exclude, args string, wildcardCase bool) {
-	config := infra.ConfigTarget{Name: "Copy", Mode: infra.ModeCopyValue, Src: src,
-		Include: include, Exclude: exclude, Args: args, Case: wildcardCase}
-	e.ExecConfigTarget(config)
-}
-
-func (e *copyExecutor) ExecConfigTarget(config infra.ConfigTarget) {
-	runtimeTarget, err := infra.NewRuntimeTarget(config)
-	if nil != err {
-		infra.Logger.Errorln(fmt.Sprintf("[copy] Err : %v", err))
-	}
-	e.ExecRuntimeTarget(runtimeTarget)
-}
-
-func (e *copyExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
-	if nil == target {
-		return
-	}
-	if len(target.SrcArr) == 0 || target.Tar == "" || strings.TrimSpace(target.Tar) == "" {
-		return
-	}
-	e.target = target
-	e.initArgs()
-	e.initExecuteList()
-	e.execList()
-}
-
-func (e *copyExecutor) initArgs() {
+func (e *copyListSearcher) initArgs() {
 	argsMark := e.target.ArgsMark
 	e.logger = infra.GenLogger(argsMark)
 	e.ignore = argsMark.MatchArg(infra.ArgMarkIgnore)
@@ -62,40 +29,27 @@ func (e *copyExecutor) initArgs() {
 	e.update = argsMark.MatchArg(infra.ArgMarkUpdate)
 }
 
-func (e *copyExecutor) initExecuteList() {
+func (e *copyListSearcher) initExecuteList() {
+	e.copyList = nil
 	for index, src := range e.target.SrcArr {
 		e.checkSrcRoot(index, src)
 	}
 	e.copyList.Sort()
 }
 
-func (e *copyExecutor) execList() {
-	e.logger.Infoln(fmt.Sprintf("[copy] Start(RunningPath='%s', Len=%d).", infra.RunningDir, e.copyList.Len()))
-	count := 0
-	for _, copyInfo := range e.copyList {
-		// 忽略新文件
-		if e.update && !copyInfo.FileInfo.IsDir() && !compareTime(copyInfo.TarAbsPath, copyInfo.FileInfo.ModTime()) {
-			e.logger.Infoln(fmt.Sprintf("[copy] Ignore by '/u': '%s'", copyInfo.SrcAbsPath))
-			continue
-		}
-		e.doCopy(copyInfo)
-		count += 1
-	}
-	ignoreLen := e.copyList.Len() - count
-	e.logger.Infoln(fmt.Sprintf("[copy] Finish(CopyLen=%d, IgnoreLen=%d).", count, ignoreLen))
+func (e *copyListSearcher) execList() {
 }
 
-func (e *copyExecutor) doCopy(copyInfo detailPath) {
-	e.logger.Infoln(fmt.Sprintf("[copy] Copy '%s' => '%s'", copyInfo.SrcRelativePath, copyInfo.TarRelativePath))
-	if copyInfo.FileInfo.IsDir() {
-		os.MkdirAll(copyInfo.TarAbsPath, copyInfo.FileInfo.Mode())
-	} else {
-		filex.CopyAuto(copyInfo.SrcAbsPath, copyInfo.TarAbsPath, copyInfo.FileInfo.Mode())
+func (e *copyListSearcher) SearchCopyList(research bool) detailPathList {
+	if !research && nil != e.copyList {
+		return e.copyList
 	}
-	cloneTime(copyInfo.TarAbsPath, copyInfo.FileInfo)
+	e.initArgs()
+	e.initExecuteList()
+	return e.copyList
 }
 
-func (e *copyExecutor) checkSrcRoot(rootIndex int, srcInfo infra.SrcInfo) {
+func (e *copyListSearcher) checkSrcRoot(rootIndex int, srcInfo infra.SrcInfo) {
 	fullSrcRoot := filex.Combine(infra.RunningDir, srcInfo.FormattedSrc)
 	fileInfo, err := os.Stat(fullSrcRoot)
 	if err != nil && !os.IsExist(err) { //不存在
@@ -116,7 +70,7 @@ func (e *copyExecutor) checkSrcRoot(rootIndex int, srcInfo infra.SrcInfo) {
 	}
 }
 
-func (e *copyExecutor) checkDir(rootIndex int, srcInfo infra.SrcInfo, srcRelativePath string, fileInfo os.FileInfo) {
+func (e *copyListSearcher) checkDir(rootIndex int, srcInfo infra.SrcInfo, srcRelativePath string, fileInfo os.FileInfo) {
 	// 名称不匹配
 	if !e.target.CheckDirFitting(fileInfo.Name()) {
 		return
@@ -131,7 +85,7 @@ func (e *copyExecutor) checkDir(rootIndex int, srcInfo infra.SrcInfo, srcRelativ
 	}
 	e.checkSubDir(rootIndex, srcInfo, srcRelativePath)
 }
-func (e *copyExecutor) checkSubDir(rootIndex int, srcInfo infra.SrcInfo, srcRelativePath string) {
+func (e *copyListSearcher) checkSubDir(rootIndex int, srcInfo infra.SrcInfo, srcRelativePath string) {
 	fullPath := filex.Combine(infra.RunningDir, srcInfo.FormattedSrc, srcRelativePath)
 	subPaths, _ := ioutil.ReadDir(fullPath)
 	// 真空目录
@@ -149,7 +103,7 @@ func (e *copyExecutor) checkSubDir(rootIndex int, srcInfo infra.SrcInfo, srcRela
 	}
 }
 
-func (e *copyExecutor) checkFile(rootIndex int, srcInfo infra.SrcInfo, srcRelativePath string, fileInfo os.FileInfo) {
+func (e *copyListSearcher) checkFile(rootIndex int, srcInfo infra.SrcInfo, srcRelativePath string, fileInfo os.FileInfo) {
 	if !srcInfo.CheckFitting(fileInfo.Name()) { // 路径匹配不成功
 		return
 	}
@@ -160,7 +114,7 @@ func (e *copyExecutor) checkFile(rootIndex int, srcInfo infra.SrcInfo, srcRelati
 	e.appendPath(rootIndex, srcInfo, srcRelativePath, fileInfo)
 }
 
-func (e *copyExecutor) appendPath(rootIndex int, srcInfo infra.SrcInfo, relativePath string, fileInfo os.FileInfo) {
+func (e *copyListSearcher) appendPath(rootIndex int, srcInfo infra.SrcInfo, relativePath string, fileInfo os.FileInfo) {
 	srcRelativePath := filex.Combine(srcInfo.FormattedSrc, relativePath)
 	srcAbsPath := filex.Combine(infra.RunningDir, srcRelativePath)
 	var tarRelativePath string

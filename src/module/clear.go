@@ -29,7 +29,7 @@ func (e *clearExecutor) Exec(src, tar, include, exclude, args string, wildcardCa
 func (e *clearExecutor) ExecConfigTarget(cfgTarget infra.ConfigTarget) {
 	runtimeTarget, err := infra.NewRuntimeTarget(cfgTarget)
 	if nil != err {
-		e.logger.Errorln(fmt.Sprintf("[clear] Err : %v", err))
+		infra.Logger.Errorln(fmt.Sprintf("[clear] Err : %v", err))
 	}
 	e.ExecRuntimeTarget(runtimeTarget)
 }

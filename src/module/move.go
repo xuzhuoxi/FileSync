@@ -34,7 +34,7 @@ func (e *moveExecutor) Exec(src, tar, include, exclude, args string, wildcardCas
 func (e *moveExecutor) ExecConfigTarget(config infra.ConfigTarget) {
 	runtimeTarget, err := infra.NewRuntimeTarget(config)
 	if nil != err {
-		e.logger.Errorln(fmt.Sprintf("[move] Err : %v", err))
+		infra.Logger.Errorln(fmt.Sprintf("[move] Err : %v", err))
 	}
 	e.ExecRuntimeTarget(runtimeTarget)
 }

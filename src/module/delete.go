@@ -29,7 +29,7 @@ func (e *deleteExecutor) Exec(src, tar, include, exclude, args string, wildcardC
 func (e *deleteExecutor) ExecConfigTarget(config infra.ConfigTarget) {
 	runtimeTarget, err := infra.NewRuntimeTarget(config)
 	if nil != err {
-		e.logger.Errorln(fmt.Sprintf("[delete] Err : %v", err))
+		infra.Logger.Errorln(fmt.Sprintf("[delete] Err : %v", err))
 	}
 	e.ExecRuntimeTarget(runtimeTarget)
 }
