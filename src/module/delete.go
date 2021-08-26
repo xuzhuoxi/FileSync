@@ -20,9 +20,9 @@ type deleteExecutor struct {
 	recurse bool
 }
 
-func (e *deleteExecutor) Exec(src, tar, include, exclude, args string, wildcardCase bool) {
+func (e *deleteExecutor) Exec(src, tar, include, exclude, args string) {
 	config := infra.ConfigTarget{Name: "Delete", Mode: infra.ModeDeleteValue, Src: src,
-		Include: include, Exclude: exclude, Args: args, Case: wildcardCase}
+		Include: include, Exclude: exclude, Args: args}
 	e.ExecConfigTarget(config)
 }
 
@@ -50,7 +50,7 @@ func (e *deleteExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 func (e *deleteExecutor) initArgs() {
 	argsMark := e.target.ArgsMark
 	e.logger = infra.GenLogger(argsMark)
-	e.recurse = argsMark.MatchArg(infra.ArgMarkRecurse)
+	e.recurse = argsMark.MatchArg(infra.ArgRecurse)
 }
 
 func (e *deleteExecutor) initExecuteList() {

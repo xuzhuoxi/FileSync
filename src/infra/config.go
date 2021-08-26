@@ -10,7 +10,7 @@ import (
 
 const (
 	PathListSeparatorStr = filex.PathListSeparatorStr
-	DirSeparatorStr      = filex.UnixSeparatorStr
+	DirSeparator         = filex.UnixSeparator
 )
 
 type ConfigTarget struct {
@@ -21,12 +21,11 @@ type ConfigTarget struct {
 	Include string `yaml:"include"` // 处理包含的文件名通配符
 	Exclude string `yaml:"exclude"` // 处理排除的文件名通配符
 	Args    string `yaml:"args"`    // 任务管理参数
-	Case    bool   `yaml:"case"`    // 是否匹配大小写
 }
 
 func (ct ConfigTarget) String() string {
-	return fmt.Sprintf("ConfigTarget[Name='%s',Mode='%s',Src='%s',Tar='%s',Include='%s',Exclude='%s',Args='%s',Case='%v']",
-		ct.Name, ct.Mode, ct.Src, ct.Tar, ct.Include, ct.Exclude, ct.Args, ct.Case)
+	return fmt.Sprintf("ConfigTarget[Name='%s',Mode='%s',Src='%s',Tar='%s',Include='%s',Exclude='%s',Args='%s']",
+		ct.Name, ct.Mode, ct.Src, ct.Tar, ct.Include, ct.Exclude, ct.Args)
 }
 
 func (ct ConfigTarget) GetMode() RuntimeMode {
@@ -37,13 +36,14 @@ func (ct ConfigTarget) GetSrcArr() []SrcInfo {
 	if ct.Src == "" {
 		return nil
 	}
+	withCase := !ct.GetArgsMark().MatchArg(ArgNoCase)
 	if !strings.Contains(ct.Src, PathListSeparatorStr) {
-		return []SrcInfo{NewSrcInfo(ct.Src, ct.Case)}
+		return []SrcInfo{NewSrcInfo(ct.Src, withCase)}
 	}
 	srcArr := strings.Split(ct.Src, PathListSeparatorStr)
 	rs := make([]SrcInfo, len(srcArr))
 	for index := range srcArr {
-		rs[index] = NewSrcInfo(srcArr[index], ct.Case)
+		rs[index] = NewSrcInfo(srcArr[index], withCase)
 	}
 	return rs
 }

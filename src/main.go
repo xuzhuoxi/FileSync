@@ -54,24 +54,22 @@ func parseFlags() (targets []infra.ConfigTarget, err error) {
 	include := flag.String("include", "", "Include settings! ")
 	exclude := flag.String("exclude", "", "exclude settings! ")
 	args := flag.String("args", "", "Running args! ")
-	wildcardCase := flag.Bool("case", true, "Whether include settings and exclude settings are case sensitive! ")
 
 	flag.Parse()
 
 	if *file != "" {
 		targets, err = loadTargets(*file, *main)
 	} else {
-		target := genTarget(fmt.Sprintf("Cmd.%s", *mode), *mode, *src, *tar, *include, *exclude, *wildcardCase, *args)
+		target := genTarget(fmt.Sprintf("Cmd.%s", *mode), *mode, *src, *tar, *include, *exclude, *args)
 		targets = []infra.ConfigTarget{target}
 	}
 	return
 }
 
-func genTarget(name, mode, src, tar, include, exclude string, wildcardCase bool,
-	args string) (target infra.ConfigTarget) {
+func genTarget(name, mode, src, tar, include, exclude string, args string) (target infra.ConfigTarget) {
 	mode = strings.ToLower(mode)
 	return infra.ConfigTarget{
-		Name: name, Mode: mode, Src: src, Tar: tar, Include: include, Exclude: exclude, Case: wildcardCase, Args: args}
+		Name: name, Mode: mode, Src: src, Tar: tar, Include: include, Exclude: exclude, Args: args}
 }
 
 func loadTargets(relativeFilePath string, main string) (targets []infra.ConfigTarget, err error) {

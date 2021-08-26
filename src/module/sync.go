@@ -22,9 +22,9 @@ type syncExecutor struct {
 	update  bool
 }
 
-func (e *syncExecutor) Exec(src, tar, include, exclude, args string, wildcardCase bool) {
+func (e *syncExecutor) Exec(src, tar, include, exclude, args string) {
 	config := infra.ConfigTarget{Name: "Sync", Mode: infra.ModeSyncValue, Src: src,
-		Include: include, Exclude: exclude, Args: args, Case: wildcardCase}
+		Include: include, Exclude: exclude, Args: args}
 	e.ExecConfigTarget(config)
 }
 
@@ -52,10 +52,10 @@ func (e *syncExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 func (e *syncExecutor) initArgs() {
 	argsMark := e.target.ArgsMark
 	e.logger = infra.GenLogger(argsMark)
-	e.double = argsMark.MatchArg(infra.ArgMarkDouble)
-	e.ignore = argsMark.MatchArg(infra.ArgMarkIgnore)
-	e.recurse = argsMark.MatchArg(infra.ArgMarkRecurse)
-	e.update = argsMark.MatchArg(infra.ArgMarkUpdate)
+	e.double = argsMark.MatchArg(infra.ArgDouble)
+	e.ignore = argsMark.MatchArg(infra.ArgIgnoreEmpty)
+	e.recurse = argsMark.MatchArg(infra.ArgRecurse)
+	e.update = argsMark.MatchArg(infra.ArgUpdate)
 }
 
 func (e *syncExecutor) initExecuteList() {

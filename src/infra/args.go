@@ -1,13 +1,14 @@
 package infra
 
 const (
-	ArgValueDouble  = "/d" //双向
-	ArgValueIgnore  = "/i" //忽略空目录
-	ArgValueLog     = "/L" //记录日志
-	ArgValueConsole = "/l" //控制台打印信息
-	ArgValueRecurse = "/r" //递归
-	ArgValueStable  = "/s" //保持文件目录结构
-	ArgValueUpdate  = "/u" //若目标文件比源文件旧，更新目标文件
+	ArgDoubleStr      = "/d" //双向
+	ArgIgnoreEmptyStr = "/i" //忽略空目录
+	ArgLogFileStr     = "/l" //记录日志
+	ArgNoCaseStr      = "/n" //大小写无关
+	ArgPrintStr       = "/p" //控制台打印信息
+	ArgRecurseStr     = "/r" //递归
+	ArgStableStr      = "/s" //保持文件目录结构
+	ArgUpdateStr      = "/u" //若目标文件比源文件旧，更新目标文件
 )
 
 const argStart = '/'
@@ -15,35 +16,33 @@ const argStart = '/'
 type ArgMark int
 
 const (
-	ArgMarkDouble ArgMark = 1 << iota
-	ArgMarkIgnore
-	ArgMarkLogFile
-	ArgMarkLogConsole
-	ArgMarkRecurse
-	ArgMarkStable
-	ArgMarkUpdate
+	ArgDouble ArgMark = 1 << iota
+	ArgIgnoreEmpty
+	ArgLogFile
+	ArgNoCase
+	ArgPrint
+	ArgRecurse
+	ArgStable
+	ArgUpdate
 )
 
 const (
-	ClearArgMark  = ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse
-	CopyArgMark   = ArgMarkIgnore | ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse | ArgMarkStable | ArgMarkUpdate
-	DeleteArgMark = ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse
-	MoveArgMark   = ArgMarkIgnore | ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse | ArgMarkStable | ArgMarkUpdate
-	SyncArgMark   = ArgMarkIgnore | ArgMarkLogFile | ArgMarkLogConsole | ArgMarkRecurse | ArgMarkUpdate
+	ClearArgMark  = ArgLogFile | ArgNoCase | ArgPrint | ArgRecurse
+	CopyArgMark   = ArgIgnoreEmpty | ArgLogFile | ArgNoCase | ArgPrint | ArgRecurse | ArgStable | ArgUpdate
+	DeleteArgMark = ArgLogFile | ArgNoCase | ArgPrint | ArgRecurse
+	MoveArgMark   = ArgIgnoreEmpty | ArgLogFile | ArgNoCase | ArgPrint | ArgRecurse | ArgStable | ArgUpdate
+	SyncArgMark   = ArgIgnoreEmpty | ArgLogFile | ArgNoCase | ArgPrint | ArgRecurse | ArgUpdate
 )
 
 var (
-	ClearArgs = []string{ArgValueLog, ArgValueConsole, ArgValueRecurse}
-	CopyArgs  = []string{ArgValueIgnore, ArgValueLog, ArgValueConsole,
-		ArgValueRecurse, ArgValueStable, ArgValueUpdate}
-	DeleteArgs = []string{ArgValueIgnore, ArgValueLog, ArgValueConsole, ArgValueRecurse}
-	MoveArgs   = []string{ArgValueIgnore, ArgValueLog, ArgValueConsole,
-		ArgValueRecurse, ArgValueStable, ArgValueUpdate}
-	SyncArgs = []string{ArgValueDouble, ArgValueIgnore, ArgValueLog,
-		ArgValueConsole, ArgValueRecurse, ArgValueUpdate}
+	ClearArgs  = []string{ArgNoCaseStr, ArgLogFileStr, ArgPrintStr, ArgRecurseStr}
+	CopyArgs   = []string{ArgNoCaseStr, ArgIgnoreEmptyStr, ArgLogFileStr, ArgPrintStr, ArgRecurseStr, ArgStableStr, ArgUpdateStr}
+	DeleteArgs = []string{ArgNoCaseStr, ArgIgnoreEmptyStr, ArgLogFileStr, ArgPrintStr, ArgRecurseStr}
+	MoveArgs   = []string{ArgNoCaseStr, ArgIgnoreEmptyStr, ArgLogFileStr, ArgPrintStr, ArgRecurseStr, ArgStableStr, ArgUpdateStr}
+	SyncArgs   = []string{ArgNoCaseStr, ArgDoubleStr, ArgIgnoreEmptyStr, ArgLogFileStr, ArgPrintStr, ArgRecurseStr, ArgUpdateStr}
 )
 
-const DefaultArgMark = ArgMarkLogFile | ArgMarkLogConsole
+const DefaultArgMark = ArgLogFile | ArgPrint
 
 var (
 	mapValue2Mark = make(map[string]ArgMark)
@@ -51,21 +50,23 @@ var (
 )
 
 func init() {
-	mapMark2Value[ArgMarkDouble] = ArgValueDouble
-	mapMark2Value[ArgMarkIgnore] = ArgValueIgnore
-	mapMark2Value[ArgMarkLogFile] = ArgValueLog
-	mapMark2Value[ArgMarkLogConsole] = ArgValueConsole
-	mapMark2Value[ArgMarkRecurse] = ArgValueRecurse
-	mapMark2Value[ArgMarkStable] = ArgValueStable
-	mapMark2Value[ArgMarkUpdate] = ArgValueUpdate
+	mapMark2Value[ArgDouble] = ArgDoubleStr
+	mapMark2Value[ArgIgnoreEmpty] = ArgIgnoreEmptyStr
+	mapMark2Value[ArgLogFile] = ArgLogFileStr
+	mapMark2Value[ArgNoCase] = ArgNoCaseStr
+	mapMark2Value[ArgPrint] = ArgPrintStr
+	mapMark2Value[ArgRecurse] = ArgRecurseStr
+	mapMark2Value[ArgStable] = ArgStableStr
+	mapMark2Value[ArgUpdate] = ArgUpdateStr
 
-	mapValue2Mark[ArgValueDouble] = ArgMarkDouble
-	mapValue2Mark[ArgValueIgnore] = ArgMarkIgnore
-	mapValue2Mark[ArgValueLog] = ArgMarkLogFile
-	mapValue2Mark[ArgValueConsole] = ArgMarkLogConsole
-	mapValue2Mark[ArgValueRecurse] = ArgMarkRecurse
-	mapValue2Mark[ArgValueStable] = ArgMarkStable
-	mapValue2Mark[ArgValueUpdate] = ArgMarkUpdate
+	mapValue2Mark[ArgDoubleStr] = ArgDouble
+	mapValue2Mark[ArgIgnoreEmptyStr] = ArgIgnoreEmpty
+	mapValue2Mark[ArgLogFileStr] = ArgLogFile
+	mapValue2Mark[ArgNoCaseStr] = ArgNoCase
+	mapValue2Mark[ArgPrintStr] = ArgPrint
+	mapValue2Mark[ArgRecurseStr] = ArgRecurse
+	mapValue2Mark[ArgStableStr] = ArgStable
+	mapValue2Mark[ArgUpdateStr] = ArgUpdate
 }
 
 // 检查参数码位的匹配情况

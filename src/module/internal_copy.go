@@ -23,10 +23,10 @@ type copyListSearcher struct {
 func (e *copyListSearcher) initArgs() {
 	argsMark := e.target.ArgsMark
 	e.logger = infra.GenLogger(argsMark)
-	e.ignore = argsMark.MatchArg(infra.ArgMarkIgnore)
-	e.recurse = argsMark.MatchArg(infra.ArgMarkRecurse)
-	e.stable = argsMark.MatchArg(infra.ArgMarkStable)
-	e.update = argsMark.MatchArg(infra.ArgMarkUpdate)
+	e.ignore = argsMark.MatchArg(infra.ArgIgnoreEmpty)
+	e.recurse = argsMark.MatchArg(infra.ArgRecurse)
+	e.stable = argsMark.MatchArg(infra.ArgStable)
+	e.update = argsMark.MatchArg(infra.ArgUpdate)
 }
 
 func (e *copyListSearcher) initExecuteList() {

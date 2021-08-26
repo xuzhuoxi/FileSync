@@ -25,9 +25,9 @@ type moveExecutor struct {
 	update  bool // 真实复制时使用
 }
 
-func (e *moveExecutor) Exec(src, tar, include, exclude, args string, wildcardCase bool) {
+func (e *moveExecutor) Exec(src, tar, include, exclude, args string) {
 	config := infra.ConfigTarget{Name: "Move", Mode: infra.ModeMoveValue, Src: src,
-		Include: include, Exclude: exclude, Args: args, Case: wildcardCase}
+		Include: include, Exclude: exclude, Args: args}
 	e.ExecConfigTarget(config)
 }
 
@@ -55,10 +55,10 @@ func (e *moveExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 func (e *moveExecutor) initArgs() {
 	argsMark := e.target.ArgsMark
 	e.logger = infra.GenLogger(argsMark)
-	e.ignore = argsMark.MatchArg(infra.ArgMarkIgnore)
-	e.recurse = argsMark.MatchArg(infra.ArgMarkRecurse)
-	e.stable = argsMark.MatchArg(infra.ArgMarkStable)
-	e.update = argsMark.MatchArg(infra.ArgMarkUpdate)
+	e.ignore = argsMark.MatchArg(infra.ArgIgnoreEmpty)
+	e.recurse = argsMark.MatchArg(infra.ArgRecurse)
+	e.stable = argsMark.MatchArg(infra.ArgStable)
+	e.update = argsMark.MatchArg(infra.ArgUpdate)
 }
 
 func (e *moveExecutor) initExecuteList() {

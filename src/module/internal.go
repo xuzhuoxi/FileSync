@@ -3,7 +3,6 @@ package module
 import (
 	"errors"
 	"github.com/xuzhuoxi/FileSync/src/infra"
-	"github.com/xuzhuoxi/infra-go/filex"
 	"io/fs"
 	"os"
 	"sort"
@@ -32,8 +31,8 @@ func (l pathList) Len() int {
 }
 
 func (l pathList) Less(i, j int) bool {
-	lenI := getRuneCount(l[i], filex.UnixSeparator)
-	lenJ := getRuneCount(l[j], filex.UnixSeparator)
+	lenI := getRuneCount(l[i], infra.DirSeparator)
+	lenJ := getRuneCount(l[j], infra.DirSeparator)
 	if lenI != lenJ {
 		return lenI > lenJ
 	}
@@ -72,8 +71,8 @@ func (l detailPathList) Less(i, j int) bool {
 	if l[i].Index != l[j].Index {
 		return l[i].Index < l[j].Index
 	}
-	lenI := getRuneCount(l[i].SrcRelativePath, filex.UnixSeparator)
-	lenJ := getRuneCount(l[j].SrcRelativePath, filex.UnixSeparator)
+	lenI := getRuneCount(l[i].SrcRelativePath, infra.DirSeparator)
+	lenJ := getRuneCount(l[j].SrcRelativePath, infra.DirSeparator)
 	if lenI != lenJ {
 		return lenI > lenJ
 	}

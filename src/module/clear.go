@@ -20,9 +20,9 @@ type clearExecutor struct {
 	recurse bool
 }
 
-func (e *clearExecutor) Exec(src, tar, include, exclude, args string, wildcardCase bool) {
+func (e *clearExecutor) Exec(src, tar, include, exclude, args string) {
 	config := infra.ConfigTarget{Name: "Clear", Mode: infra.ModeClearValue, Src: src,
-		Include: include, Exclude: exclude, Args: args, Case: wildcardCase}
+		Include: include, Exclude: exclude, Args: args}
 	e.ExecConfigTarget(config)
 }
 
@@ -50,7 +50,7 @@ func (e *clearExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 func (e *clearExecutor) initArgs() {
 	argsMark := e.target.ArgsMark
 	e.logger = infra.GenLogger(argsMark)
-	e.recurse = argsMark.MatchArg(infra.ArgMarkRecurse)
+	e.recurse = argsMark.MatchArg(infra.ArgRecurse)
 }
 
 func (e *clearExecutor) initExecuteList() {

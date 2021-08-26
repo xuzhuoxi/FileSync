@@ -17,7 +17,7 @@ var (
 )
 
 func init() {
-	Logger = GenLogger(ArgMarkLogFile | ArgMarkLogConsole)
+	Logger = GenLogger(ArgLogFile | ArgPrint)
 }
 
 func SetRunningDir(dir string) {
@@ -26,10 +26,10 @@ func SetRunningDir(dir string) {
 
 func GenLogger(mark ArgMark) logx.ILogger {
 	logger := logx.NewLogger()
-	if mark.MatchArg(ArgMarkLogConsole) {
+	if mark.MatchArg(ArgPrint) {
 		logger.SetConfig(logx.LogConfig{Type: logx.TypeConsole, Level: logx.LevelAll})
 	}
-	if mark.MatchArg(ArgMarkLogFile) {
+	if mark.MatchArg(ArgLogFile) {
 		logger.SetConfig(logx.LogConfig{Type: logx.TypeRollingFile, Level: logx.LevelAll,
 			FileDir: osxu.GetRunningDir(), FileName: ApplicationName, FileExtName: ".log", MaxSize: 4 * mathx.MB})
 	}

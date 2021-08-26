@@ -50,8 +50,9 @@ func NewRuntimeTarget(target ConfigTarget) (runtimeTarget *RuntimeTarget, err er
 		DirIncludes:  dirIncludes,
 		FileExcludes: fileExcludes,
 		DirExcludes:  dirExcludes,
-		Case:         target.Case,
-		ArgsMark:     argMarks}, nil
+		ArgsMark:     argMarks,
+		Case:         !argMarks.MatchArg(ArgNoCase),
+	}, nil
 }
 
 type RuntimeTarget struct {
@@ -63,8 +64,8 @@ type RuntimeTarget struct {
 	DirIncludes  []Wildcard  // 处理包含的目录通配符
 	FileExcludes []Wildcard  // 处理排除的文件名通配符
 	DirExcludes  []Wildcard  // 处理排除的目录通配符
-	Case         bool        // 是否匹配大小写
 	ArgsMark     ArgMark     // 任务管理参数
+	Case         bool        // 是否匹配大小写
 }
 
 func (t *RuntimeTarget) CheckFileFitting(filename string) bool {
@@ -75,7 +76,7 @@ func (t *RuntimeTarget) CheckDirFitting(filename string) bool {
 	return t.checkFitting(filename, t.DirIncludes, t.DirExcludes)
 }
 
-func (t *RuntimeTarget) MatchParam(param ArgMark) bool {
+func (t *RuntimeTarget) MatchArg(param ArgMark) bool {
 	return t.ArgsMark.MatchArg(param)
 }
 

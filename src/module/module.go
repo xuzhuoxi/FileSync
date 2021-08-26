@@ -8,7 +8,7 @@ import (
 
 type IModeExecutor interface {
 	// 执行任务
-	Exec(src, tar, include, exclude, args string, wildcardCase bool)
+	Exec(src, tar, include, exclude, args string)
 	// 执行任务
 	ExecConfigTarget(config infra.ConfigTarget)
 	// 执行任务
