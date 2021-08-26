@@ -97,26 +97,54 @@ E.g.:
 
 ### 参数说明
 
-- /d
+- /d (double)
 
-	- 说明：双向同步
+	- 说明：开启双向同步，默认为单向
 	
 	- 适用范围： [sync](#FileSync)
 
+- /i (ignore empty)
 
-- /f
+	- 说明：忽略空目录，默认为不忽略
+	
+	- 适用范围： [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
 
-- /i
+- /l (log file)
 
-- /L
+	- 说明：开启记录日志，默认不记录日志
+	
+	- 适用范围： [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
 
-- /l
+- /n (no case)
+	
+	- 说明：大小写无关，默认区别大小写
+	
+	- 适用范围： [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
 
-- /r
+- /p (print)
+	
+	- 说明：控制台打印信息，默认不打印信息
+	
+	- 适用范围： [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
 
-- /s
+- /r (recurse)
+	
+	- 说明：递归，默认不递归
+	
+	- 适用范围： [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
 
-- /u
+- /s (stable)
+	
+	- 说明：保持文件目录结构，默认不保持
+	
+	- 适用范围： [copy](#copy), [move](#move)
+
+- /u (update by time)
+	
+	- 说明：按时间更新
+	
+	- 适用范围： [copy](#copy), [move](#move), [sync](#sync)
+
 
 ### 配置文件说明
 
