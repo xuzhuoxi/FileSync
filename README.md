@@ -13,7 +13,7 @@ go 1.16.4
 
 ## Getting Started(开始)
 
-### Download Release(下载)
+### 1.Download Release(下载)
 
 - 下载运行版本 [here](https://github.com/xuzhuoxi/ImageSplitter/releases).
 
@@ -23,13 +23,13 @@ go 1.16.4
 	go get -u github.com/xuzhuoxi/FileSync
 	```
 
-### Build(构建)
+### 2.Build(构建)
 
 Execution the construction file([build.sh](/build/build.sh)) to get the releases if you have already downloaded the repository.
 
 You can modify the construction file([build.sh](/build/build.sh)) to achieve what you want if necessary. The command line description is [here](https://github.com/laher/goxc).
 
-### Run(运行)
+### 3.Run(运行)
 
 #### Demo(例子)
 
@@ -87,6 +87,14 @@ E.g.:
 
 #### clear
 
+清除空目录
+
+- mode
+- src 仅支持目录，多个路径用";"分隔
+- include 格式：“file:*.jpg,123.png;dir:folder1,filder2”
+- exclude 格式：“file:*.jpg,123.png;dir:folder1,filder2”
+- args
+
 #### copy
 
 #### delete
@@ -95,55 +103,63 @@ E.g.:
 
 #### sync
 
+### 通配符说明
+
+- src中通配符支持
+
+- include中通配符支持
+
+- exclude中通配符支持
+
 ### 参数说明
 
-- /d (double)
+#### /d (double)
 
-	- 说明：开启双向同步，默认为单向
-	
-	- 适用范围： [sync](#FileSync)
+- 说明：开启双向同步，默认为单向
 
-- /i (ignore empty)
+- 适用范围： [sync](#FileSync)
 
-	- 说明：忽略空目录，默认为不忽略
-	
-	- 适用范围： [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
+#### /i (ignore empty)
 
-- /l (log file)
+- 说明：忽略空目录，默认为不忽略
+	
+- 适用范围： [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
 
-	- 说明：开启记录日志，默认不记录日志
-	
-	- 适用范围： [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
+#### /L (log file)
 
-- /n (no case)
+- 说明：开启记录日志，默认不记录日志
 	
-	- 说明：大小写无关，默认区别大小写
-	
-	- 适用范围： [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
+- 适用范围： [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
 
-- /p (print)
+#### /n (no case)
 	
-	- 说明：控制台打印信息，默认不打印信息
+- 说明：大小写无关，默认区分大小写
 	
-	- 适用范围： [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
+- 适用范围： [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
 
-- /r (recurse)
+#### /p (print)
 	
-	- 说明：递归，默认不递归
+- 说明：控制台打印信息，默认不打印信息
 	
-	- 适用范围： [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
+- 适用范围： [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
 
-- /s (stable)
-	
-	- 说明：保持文件目录结构，默认不保持
-	
-	- 适用范围： [copy](#copy), [move](#move)
+#### /r (recurse)
 
-- /u (update by time)
+- 说明：递归，默认不递归
 	
-	- 说明：按时间更新
+- 适用范围： [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
+
+#### /s (stable)
 	
-	- 适用范围： [copy](#copy), [move](#move), [sync](#sync)
+- 说明：保持文件目录结构，默认不保持
+	
+- 适用范围： [copy](#copy), [move](#move)
+
+#### /u (update by time)
+	
+- 说明：按时间更新
+	
+- 适用范围： [copy](#copy), [move](#move), [sync](#sync)
 
 
 ### 配置文件说明
@@ -157,6 +173,5 @@ xuzhuoxi
 <xuzhuoxi@gmail.com> or <mailxuzhuoxi@163.com>
 
 ## License(开源许可证)
-ImageSplitter source code is available under the MIT [License](/LICENSE).
 
-
+~~FileSync source code is available under the MIT [License](/LICENSE).~~

@@ -3,7 +3,7 @@ package infra
 const (
 	ArgDoubleStr      = "/d" //双向
 	ArgIgnoreEmptyStr = "/i" //忽略空目录
-	ArgLogFileStr     = "/l" //记录日志
+	ArgLogFileStr     = "/L" //记录日志
 	ArgNoCaseStr      = "/n" //大小写无关
 	ArgPrintStr       = "/p" //控制台打印信息
 	ArgRecurseStr     = "/r" //递归
@@ -31,7 +31,7 @@ const (
 	CopyArgMark   = ArgIgnoreEmpty | ArgLogFile | ArgNoCase | ArgPrint | ArgRecurse | ArgStable | ArgUpdate
 	DeleteArgMark = ArgLogFile | ArgNoCase | ArgPrint | ArgRecurse
 	MoveArgMark   = ArgIgnoreEmpty | ArgLogFile | ArgNoCase | ArgPrint | ArgRecurse | ArgStable | ArgUpdate
-	SyncArgMark   = ArgIgnoreEmpty | ArgLogFile | ArgNoCase | ArgPrint | ArgRecurse | ArgUpdate
+	SyncArgMark   = ArgDouble | ArgIgnoreEmpty | ArgLogFile | ArgNoCase | ArgPrint | ArgRecurse | ArgUpdate
 )
 
 var (
