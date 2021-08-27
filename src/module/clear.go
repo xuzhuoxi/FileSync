@@ -9,12 +9,12 @@ import (
 )
 
 func newClearExecutor() IModeExecutor {
-	return &clearExecutor{list: newPathList(0, 128)}
+	return &clearExecutor{list: newPathStrList(0, 128)}
 }
 
 type clearExecutor struct {
 	target *infra.RuntimeTarget
-	list   pathList
+	list   *pathStrList
 
 	logger  logx.ILogger
 	recurse bool
@@ -73,7 +73,7 @@ func (e *clearExecutor) execList() {
 	if e.list.Len() == 0 {
 		return
 	}
-	for _, dir := range e.list {
+	for _, dir := range e.list.ItemArray {
 		e.logger.Infoln(fmt.Sprintf("[clear] Clear Folder='%s'", dir))
 		os.RemoveAll(dir)
 	}
@@ -129,6 +129,6 @@ func (e *clearExecutor) checkDir(fullDir string, srcInfo infra.SrcInfo) (isFile 
 			return false
 		}
 	}
-	e.list = append(e.list, fullDir)
+	e.list.Append(fullDir)
 	return true
 }

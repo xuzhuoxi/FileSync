@@ -9,12 +9,12 @@ import (
 )
 
 func newDeleteExecutor() IModeExecutor {
-	return &deleteExecutor{list: newPathList(0, 128)}
+	return &deleteExecutor{list: newPathStrList(0, 128)}
 }
 
 type deleteExecutor struct {
 	target *infra.RuntimeTarget
-	list   pathList
+	list   *pathStrList
 
 	logger  logx.ILogger
 	recurse bool
@@ -73,7 +73,7 @@ func (e *deleteExecutor) execList() {
 	if e.list.Len() == 0 {
 		return
 	}
-	for _, dir := range e.list {
+	for _, dir := range e.list.ItemArray {
 		e.logger.Infoln("[delete] Delete Path:", dir)
 		os.RemoveAll(dir)
 	}
@@ -114,6 +114,6 @@ func (e *deleteExecutor) checkFileName(fullPath string, srcInfo infra.SrcInfo) {
 	if !e.target.CheckFileFitting(filename) {
 		return
 	}
-	e.list = append(e.list, fullPath)
+	e.list.Append(fullPath)
 	return
 }

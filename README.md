@@ -93,7 +93,7 @@ E.g.:
 - src 仅支持目录，多个路径用";"分隔
 - include 格式：“file:*.jpg,123.png;dir:folder1,filder2”
 - exclude 格式：“file:*.jpg,123.png;dir:folder1,filder2”
-- args
+- args 
 
 #### copy
 
