@@ -13,7 +13,6 @@ func newSyncExecutor() IModeExecutor {
 
 type syncExecutor struct {
 	target *infra.RuntimeTarget
-	list   *pathStrList
 
 	logger  logx.ILogger
 	double  bool

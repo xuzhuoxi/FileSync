@@ -3,26 +3,28 @@ package module
 import (
 	"fmt"
 	"github.com/xuzhuoxi/FileSync/src/infra"
+	"github.com/xuzhuoxi/FileSync/src/module/internal"
 	"github.com/xuzhuoxi/infra-go/filex"
 	"github.com/xuzhuoxi/infra-go/logx"
-	"io/ioutil"
 	"os"
 	"strings"
 )
 
 func newMoveExecutor() IModeExecutor {
-	return &moveExecutor{}
+	return &moveExecutor{searcher: internal.NewPathSearcher()}
 }
 
 type moveExecutor struct {
-	target   *infra.RuntimeTarget
-	moveList detailPathList
+	target *infra.RuntimeTarget
 
 	logger  logx.ILogger
 	ignore  bool // 处理复制列表时使用
 	recurse bool // 处理复制列表时使用
 	stable  bool // 处理复制列表时使用
 	update  bool // 真实复制时使用
+
+	searcher    internal.IPathSearcher
+	tempSrcInfo infra.SrcInfo
 }
 
 func (e *moveExecutor) Exec(src, tar, include, exclude, args string) {
@@ -59,158 +61,102 @@ func (e *moveExecutor) initArgs() {
 	e.recurse = argsMark.MatchArg(infra.ArgRecurse)
 	e.stable = argsMark.MatchArg(infra.ArgStable)
 	e.update = argsMark.MatchArg(infra.ArgUpdate)
+
+	e.searcher.SetParams(e.recurse, !e.ignore, e.logger)
 }
 
 func (e *moveExecutor) initExecuteList() {
-	for index, src := range e.target.SrcArr {
-		e.checkSrcRoot(index, src)
+	e.searcher.SetFitting(e.fileFitting, e.dirFitting)
+	e.searcher.InitSearcher()
+	for _, src := range e.target.SrcArr {
+		e.tempSrcInfo = src
+		e.searcher.Search(src.FormattedSrc, src.IncludeSelf)
 	}
-	e.moveList.Sort()
+	e.searcher.SortResult()
 }
 
 func (e *moveExecutor) execList() {
-	e.logger.Infoln(fmt.Sprintf("[move] Start(RunningPath='%s', Len=%d).", infra.RunningDir, e.moveList.Len()))
+	results := e.searcher.GetResults()
+	resultLen := len(results)
+	e.logger.Infoln(fmt.Sprintf("[move] Start(RunningPath='%s', Len=%d).", infra.RunningDir, resultLen))
 	count := 0
-	for _, moveInfo := range e.moveList {
+	var fileInfo os.FileInfo
+	var tarFull string
+	for _, moveInfo := range results {
+		fileInfo = moveInfo.GetFileInfo()
 		// 忽略目录
-		if moveInfo.FileInfo.IsDir() {
+		if fileInfo.IsDir() {
 			continue
 		}
+		_, tarFull = internal.GetTarPaths(moveInfo, e.stable, e.target.Tar)
 		// 忽略新文件
-		if e.update && !compareTime(moveInfo.TarAbsPath, moveInfo.FileInfo.ModTime()) {
-			e.logger.Infoln(fmt.Sprintf("[move] Ignore by '/u': '%s'", moveInfo.SrcAbsPath))
+		if e.update && !infra.CheckPathByTime(tarFull, fileInfo.ModTime()) {
+			e.logger.Infoln(fmt.Sprintf("[move] Ignore by '/u': '%s'", moveInfo.GetRelativePath()))
 			continue
 		}
 		e.doMoveFile(moveInfo)
 		count += 1
 	}
-	for _, moveInfo := range e.moveList {
+	for _, moveInfo := range results {
+		fileInfo = moveInfo.GetFileInfo()
 		// 忽略文件
-		if !moveInfo.FileInfo.IsDir() {
+		if !fileInfo.IsDir() {
 			continue
 		}
+		srcFull := moveInfo.GetFullPath()
 		// 忽略非空目录
-		if !filex.IsEmptyDir(moveInfo.SrcAbsPath) {
-			continue
-		}
-		// 忽略新目录
-		if e.update && !compareTime(moveInfo.TarAbsPath, moveInfo.FileInfo.ModTime()) {
+		if !filex.IsEmptyDir(srcFull) {
 			continue
 		}
 		e.doMoveDir(moveInfo)
 		count += 1
 	}
-	ignoreLen := e.moveList.Len() - count
+	ignoreLen := resultLen - count
 	e.logger.Infoln(fmt.Sprintf("[move] Finish(CopyLen=%d, IgnoreLen=%d).", count, ignoreLen))
 }
 
-func (e *moveExecutor) doMoveFile(moveInfo detailPath) {
-	e.logger.Infoln(fmt.Sprintf("[move] Move file '%s' => '%s'", moveInfo.SrcRelativePath, moveInfo.TarRelativePath))
-	os.Rename(moveInfo.SrcAbsPath, moveInfo.TarAbsPath)
-	if moveInfo.FileInfo.IsDir() {
-		os.MkdirAll(moveInfo.TarAbsPath, moveInfo.FileInfo.Mode())
-		cloneTime(moveInfo.TarAbsPath, moveInfo.FileInfo)
-	} else {
-		filex.CompletePath(moveInfo.TarAbsPath, moveInfo.FileInfo.Mode())
-		os.Rename(moveInfo.SrcAbsPath, moveInfo.TarAbsPath)
-	}
+func (e *moveExecutor) doMoveFile(pathInfo internal.IPathInfo) {
+	tarRelative, tarFull := internal.GetTarPaths(pathInfo, e.stable, e.target.Tar)
+	e.logger.Infoln(fmt.Sprintf("[move] Move file '%s' => '%s'", pathInfo.GetRelativePath(), tarRelative))
+
+	filex.CompleteParentPath(tarFull, pathInfo.GetFileInfo().Mode())
+	os.Rename(pathInfo.GetFullPath(), tarFull)
 }
 
-func (e *moveExecutor) doMoveDir(moveInfo detailPath) {
-	e.logger.Infoln(fmt.Sprintf("[move] Move Dir '%s' => '%s'", moveInfo.SrcRelativePath, moveInfo.TarRelativePath))
-	os.Rename(moveInfo.SrcAbsPath, moveInfo.TarAbsPath)
-	if moveInfo.FileInfo.IsDir() {
-		os.MkdirAll(moveInfo.TarAbsPath, moveInfo.FileInfo.Mode())
-		cloneTime(moveInfo.TarAbsPath, moveInfo.FileInfo)
-	} else {
-		os.Rename(moveInfo.SrcAbsPath, moveInfo.TarAbsPath)
+func (e *moveExecutor) doMoveDir(pathInfo internal.IPathInfo) {
+	tarRelative, tarFull := internal.GetTarPaths(pathInfo, e.stable, e.target.Tar)
+	e.logger.Infoln(fmt.Sprintf("[move] Move Dir '%s' => '%s'", pathInfo.GetRelativePath(), tarRelative))
+
+	fileInfo := pathInfo.GetFileInfo()
+	if filex.IsDir(tarFull) { // 目录存在
+		infra.CloneTime(tarFull, fileInfo)
+		filex.Remove(pathInfo.GetFullPath())
+		return
 	}
+	filex.CompleteParentPath(tarFull, fileInfo.Mode())
+	os.Rename(pathInfo.GetFullPath(), tarFull)
 }
 
-func (e *moveExecutor) checkSrcRoot(rootIndex int, srcInfo infra.SrcInfo) {
-	fullSrcRoot := filex.Combine(infra.RunningDir, srcInfo.FormattedSrc)
-	fileInfo, err := os.Stat(fullSrcRoot)
-	if err != nil && !os.IsExist(err) { //不存在
-		e.logger.Warnln(fmt.Sprintf("[copy] Ignore src[%d]: %s", rootIndex, srcInfo.OriginalSrc))
-		return
+func (e *moveExecutor) fileFitting(fileInfo os.FileInfo) bool {
+	if nil == fileInfo {
+		return false
 	}
-
-	if !fileInfo.IsDir() { // 文件
-		e.checkFile(rootIndex, srcInfo, "", fileInfo)
-		return
-	}
-
-	// 目录
-	if srcInfo.IncludeSelf {
-		e.checkDir(rootIndex, srcInfo, "", fileInfo)
-	} else {
-		e.checkSubDir(rootIndex, srcInfo, "")
-	}
-}
-
-func (e *moveExecutor) checkDir(rootIndex int, srcInfo infra.SrcInfo, srcRelativePath string, fileInfo os.FileInfo) {
-	// 名称不匹配
-	if !e.target.CheckDirFitting(fileInfo.Name()) {
-		return
-	}
-	// 不忽略空目录，把目录都加入到列表中
-	if !e.ignore {
-		e.appendPath(rootIndex, srcInfo, srcRelativePath, fileInfo)
-	}
-	// 不递归
-	if !e.recurse {
-		return
-	}
-	e.checkSubDir(rootIndex, srcInfo, srcRelativePath)
-}
-func (e *moveExecutor) checkSubDir(rootIndex int, srcInfo infra.SrcInfo, srcRelativePath string) {
-	fullPath := filex.Combine(infra.RunningDir, srcInfo.FormattedSrc, srcRelativePath)
-	subPaths, _ := ioutil.ReadDir(fullPath)
-	// 真空目录
-	if len(subPaths) == 0 {
-		return
-	}
-	// 遍历
-	for _, info := range subPaths {
-		rp := filex.Combine(srcRelativePath, info.Name())
-		if info.IsDir() {
-			e.checkDir(rootIndex, srcInfo, rp, info)
-		} else {
-			e.checkFile(rootIndex, srcInfo, rp, info)
-		}
-	}
-}
-
-func (e *moveExecutor) checkFile(rootIndex int, srcInfo infra.SrcInfo, srcRelativePath string, fileInfo os.FileInfo) {
-	if !srcInfo.CheckFitting(fileInfo.Name()) { // 路径匹配不成功
-		return
+	if !e.tempSrcInfo.CheckFitting(fileInfo.Name()) { // 路径匹配不成功
+		return false
 	}
 	// 名称不匹配
 	if !e.target.CheckFileFitting(fileInfo.Name()) {
-		return
+		return false
 	}
-	e.appendPath(rootIndex, srcInfo, srcRelativePath, fileInfo)
+	return true
 }
 
-func (e *moveExecutor) appendPath(rootIndex int, srcInfo infra.SrcInfo, relativePath string, fileInfo os.FileInfo) {
-	srcRelativePath := filex.Combine(srcInfo.FormattedSrc, relativePath)
-	srcAbsPath := filex.Combine(infra.RunningDir, srcRelativePath)
-	var tarRelativePath string
-	if e.stable { // 保持目录
-		if srcInfo.IncludeSelf { // 包含源目录
-			_, selfName := filex.Split(srcInfo.FormattedSrc)
-			tarRelativePath = filex.Combine(e.target.Tar, selfName, relativePath)
-		} else { // 不包含源目录
-			tarRelativePath = filex.Combine(e.target.Tar, relativePath)
-		}
-	} else { // 不保持目录
-		tarRelativePath = filex.Combine(e.target.Tar, fileInfo.Name())
+func (e *moveExecutor) dirFitting(dirInfo os.FileInfo) bool {
+	if nil == dirInfo {
+		return false
 	}
-	tarAbsPath := filex.Combine(infra.RunningDir, tarRelativePath)
-
-	detail := detailPath{
-		Index: rootIndex, SrcInfo: srcInfo, FileInfo: fileInfo,
-		SrcRelativePath: srcRelativePath, SrcAbsPath: srcAbsPath,
-		TarRelativePath: tarRelativePath, TarAbsPath: tarAbsPath}
-	e.moveList = append(e.moveList, detail)
+	if !e.target.CheckDirFitting(dirInfo.Name()) {
+		return false
+	}
+	return true
 }

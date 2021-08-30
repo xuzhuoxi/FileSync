@@ -1,4 +1,4 @@
-main: 'copy'
+main: 'move'
 groups:
   - name: 'all'
     targets: 'clear,copy,delete,move,sync'
@@ -28,7 +28,7 @@ targets:
     tar: 'move/tar'
     include: 'file:*.txt,*.png'
     exclude: 'file:*.png'
-    args: '/i/p/L/r/s/u'
+    args: '/p/L/r/s/u'
   - name: 'sync'
     mode: 'clear'
     src: 'srcFolderPath'

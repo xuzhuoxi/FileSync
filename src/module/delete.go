@@ -3,18 +3,19 @@ package module
 import (
 	"fmt"
 	"github.com/xuzhuoxi/FileSync/src/infra"
+	"github.com/xuzhuoxi/FileSync/src/module/internal"
 	"github.com/xuzhuoxi/infra-go/filex"
 	"github.com/xuzhuoxi/infra-go/logx"
 	"os"
 )
 
 func newDeleteExecutor() IModeExecutor {
-	return &deleteExecutor{list: newPathStrList(0, 128)}
+	return &deleteExecutor{list: internal.NewPathStrList(0, 128)}
 }
 
 type deleteExecutor struct {
 	target *infra.RuntimeTarget
-	list   *pathStrList
+	list   internal.IPathStrList
 
 	logger  logx.ILogger
 	recurse bool
@@ -73,7 +74,7 @@ func (e *deleteExecutor) execList() {
 	if e.list.Len() == 0 {
 		return
 	}
-	for _, dir := range e.list.ItemArray {
+	for _, dir := range e.list.GetAll() {
 		e.logger.Infoln("[delete] Delete Path:", dir)
 		os.RemoveAll(dir)
 	}

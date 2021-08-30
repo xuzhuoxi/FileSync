@@ -3,18 +3,19 @@ package module
 import (
 	"fmt"
 	"github.com/xuzhuoxi/FileSync/src/infra"
+	"github.com/xuzhuoxi/FileSync/src/module/internal"
 	"github.com/xuzhuoxi/infra-go/filex"
 	"github.com/xuzhuoxi/infra-go/logx"
 	"os"
 )
 
 func newClearExecutor() IModeExecutor {
-	return &clearExecutor{list: newPathStrList(0, 128)}
+	return &clearExecutor{list: internal.NewPathStrList(0, 128)}
 }
 
 type clearExecutor struct {
 	target *infra.RuntimeTarget
-	list   *pathStrList
+	list   internal.IPathStrList
 
 	logger  logx.ILogger
 	recurse bool
@@ -73,7 +74,7 @@ func (e *clearExecutor) execList() {
 	if e.list.Len() == 0 {
 		return
 	}
-	for _, dir := range e.list.ItemArray {
+	for _, dir := range e.list.GetAll() {
 		e.logger.Infoln(fmt.Sprintf("[clear] Clear Folder='%s'", dir))
 		os.RemoveAll(dir)
 	}
