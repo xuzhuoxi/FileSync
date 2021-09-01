@@ -18,7 +18,9 @@ type clearExecutor struct {
 	list   internal.IPathStrList
 
 	logger  logx.ILogger
-	recurse bool
+	recurse bool // 递归，查找文件时使用
+
+	tempSrcInfo infra.SrcInfo
 }
 
 func (e *clearExecutor) Exec(src, tar, include, exclude, args string) {
@@ -51,20 +53,21 @@ func (e *clearExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 func (e *clearExecutor) initArgs() {
 	argsMark := e.target.ArgsMark
 	e.logger = infra.GenLogger(argsMark)
-	e.recurse = argsMark.MatchArg(infra.ArgRecurse)
+	e.recurse = argsMark.MatchArg(infra.MarkRecurse)
 }
 
 func (e *clearExecutor) initExecuteList() {
 	for index, src := range e.target.SrcArr {
+		e.tempSrcInfo = src
 		path := filex.Combine(infra.RunningDir, src.FormattedSrc)
 		if !filex.IsFolder(path) {
 			e.logger.Warnln(fmt.Sprintf("[clear] Ignore src[%d]: %s", index, src.OriginalSrc))
 			continue
 		}
 		if src.IncludeSelf {
-			e.checkPath(path, src)
+			e.checkDir(path)
 		} else {
-			e.CheckSubDir(path, src)
+			e.checkSubDir(path)
 		}
 	}
 	e.list.Sort()
@@ -80,18 +83,35 @@ func (e *clearExecutor) execList() {
 	}
 }
 
-func (e *clearExecutor) checkPath(fullPath string, srcInfo infra.SrcInfo) {
-	isFile := e.checkDir(fullPath, srcInfo)
+func (e *clearExecutor) fileFitting(fileInfo os.FileInfo) bool {
+	return false
+}
+
+func (e *clearExecutor) dirFitting(dirInfo os.FileInfo) bool {
+	// 路径通配符不匹配
+	filename := dirInfo.Name()
+	if !e.tempSrcInfo.CheckFitting(filename) {
+		return false
+	}
+	// 名称不匹配
+	if !e.target.CheckDirFitting(filename) {
+		return false
+	}
+	return true
+}
+
+func (e *clearExecutor) checkPath(fullPath string) {
+	isFile := e.checkDir(fullPath)
 	if isFile {
 		return
 	}
 	if !e.recurse {
 		return
 	}
-	e.CheckSubDir(fullPath, srcInfo)
+	e.checkSubDir(fullPath)
 }
 
-func (e *clearExecutor) CheckSubDir(fullDir string, srcInfo infra.SrcInfo) {
+func (e *clearExecutor) checkSubDir(fullDir string) {
 	dirPaths, _ := filex.GetPathsInDir(fullDir, func(subPath string, info os.FileInfo) bool {
 		return info.IsDir()
 	})
@@ -99,22 +119,19 @@ func (e *clearExecutor) CheckSubDir(fullDir string, srcInfo infra.SrcInfo) {
 		return
 	}
 	for _, dir := range dirPaths {
-		e.checkPath(dir, srcInfo)
+		e.checkPath(dir)
 	}
 }
 
-func (e *clearExecutor) checkDir(fullDir string, srcInfo infra.SrcInfo) (isFile bool) {
-	// 非目录
-	if !filex.IsFolder(fullDir) {
+func (e *clearExecutor) checkDir(fullDir string) (Interrupt bool) {
+	fileInfo, err := os.Stat(fullDir)
+	if err != nil && !os.IsExist(err) { //不存在
 		return true
 	}
-	_, filename := filex.Split(fullDir)
-	// 路径通配符不匹配
-	if !srcInfo.CheckFitting(filename) {
-		return false
+	if !fileInfo.IsDir() {
+		return true
 	}
-	// 名称不匹配
-	if !e.target.CheckDirFitting(filename) {
+	if !e.dirFitting(fileInfo) {
 		return false
 	}
 	if e.recurse {

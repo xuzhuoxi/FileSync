@@ -2,18 +2,18 @@ package infra
 
 import "github.com/xuzhuoxi/infra-go/filex"
 
-func NewSrcInfo(srcPath string, matchCase bool) SrcInfo {
+func NewSrcInfo(srcPath string) SrcInfo {
 	originalSrc := filex.FormatPath(srcPath)
 	dir, filename := filex.Split(srcPath)
 	if "" == filename { // 根目录
-		return SrcInfo{OriginalSrc: srcPath, FormattedSrc: originalSrc, IncludeSelf: false, Wildcard: "", MatchCase: matchCase}
+		return SrcInfo{OriginalSrc: srcPath, FormattedSrc: originalSrc, IncludeSelf: false, Wildcard: ""}
 	}
 	wildcard := Wildcard(filename)
 	if wildcard.IsWildcard() { // 通配符
-		return SrcInfo{OriginalSrc: srcPath, FormattedSrc: dir, IncludeSelf: false, Wildcard: wildcard, MatchCase: matchCase}
+		return SrcInfo{OriginalSrc: srcPath, FormattedSrc: dir, IncludeSelf: false, Wildcard: wildcard}
 	}
 	// 文件名 或 目录名
-	return SrcInfo{OriginalSrc: srcPath, FormattedSrc: originalSrc, IncludeSelf: true, Wildcard: "", MatchCase: matchCase}
+	return SrcInfo{OriginalSrc: srcPath, FormattedSrc: originalSrc, IncludeSelf: true, Wildcard: ""}
 }
 
 type SrcInfo struct {
@@ -21,11 +21,10 @@ type SrcInfo struct {
 	FormattedSrc string   // 处理后信息
 	IncludeSelf  bool     // 目录路径
 	Wildcard     Wildcard // 文件通配符
-	MatchCase    bool
 }
 
 func (si SrcInfo) CheckFitting(filename string) bool {
-	return "" == si.Wildcard || si.Wildcard.Match(filename, si.MatchCase)
+	return "" == si.Wildcard || si.Wildcard.Match(filename)
 }
 
 func NewRuntimeTarget(target ConfigTarget) (runtimeTarget *RuntimeTarget, err error) {
@@ -51,7 +50,6 @@ func NewRuntimeTarget(target ConfigTarget) (runtimeTarget *RuntimeTarget, err er
 		FileExcludes: fileExcludes,
 		DirExcludes:  dirExcludes,
 		ArgsMark:     argMarks,
-		Case:         !argMarks.MatchArg(ArgNoCase),
 	}, nil
 }
 
@@ -65,7 +63,6 @@ type RuntimeTarget struct {
 	FileExcludes []Wildcard  // 处理排除的文件名通配符
 	DirExcludes  []Wildcard  // 处理排除的目录通配符
 	ArgsMark     ArgMark     // 任务管理参数
-	Case         bool        // 是否匹配大小写
 }
 
 func (t *RuntimeTarget) CheckFileFitting(filename string) bool {
@@ -97,7 +94,7 @@ func (t *RuntimeTarget) checkFitting(filename string, includes []Wildcard, exclu
 
 func (t *RuntimeTarget) checkInWildcard(wildcards []Wildcard, value string) bool {
 	for index := range wildcards {
-		if wildcards[index].Match(value, t.Case) {
+		if wildcards[index].Match(value) {
 			return true
 		}
 	}

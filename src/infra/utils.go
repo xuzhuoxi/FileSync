@@ -3,7 +3,6 @@ package infra
 import (
 	"errors"
 	"os"
-	"time"
 )
 
 func GetRuneCount(str string, r rune) int {
@@ -21,11 +20,24 @@ func CloneTime(tarPath string, srcInfo os.FileInfo) {
 	os.Chtimes(tarPath, srcInfo.ModTime(), srcInfo.ModTime())
 }
 
-func CheckPathByTime(tarPath string, mt time.Time) bool {
-	fileInfo, err := os.Stat(tarPath)
+// 取路径属性
+func GetFileInfo(path string) os.FileInfo {
+	fileInfo, err := os.Stat(path)
 	// 不存在
 	if err != nil && !errors.Is(err, os.ErrExist) {
-		return true
+		return nil
 	}
-	return fileInfo.ModTime().UnixNano() < mt.UnixNano()
+	return fileInfo
+}
+
+// 比较源文件与目标文件的修改时间
+// 如果源文件更新，则返回true，否则返回false
+func CompareWithTime(srcInfo, tarInfo os.FileInfo) bool {
+	return srcInfo.ModTime().UnixNano() > tarInfo.ModTime().UnixNano()
+}
+
+// 比较源文件与目标文件的大小
+// 如果源文件更大，则返回true，否则返回false
+func CompareWithSize(srcInfo, tarInfo os.FileInfo) bool {
+	return srcInfo.Size() < tarInfo.Size()
 }

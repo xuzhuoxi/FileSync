@@ -36,14 +36,13 @@ func (ct ConfigTarget) GetSrcArr() []SrcInfo {
 	if ct.Src == "" {
 		return nil
 	}
-	withCase := !ct.GetArgsMark().MatchArg(ArgNoCase)
 	if !strings.Contains(ct.Src, PathListSeparatorStr) {
-		return []SrcInfo{NewSrcInfo(ct.Src, withCase)}
+		return []SrcInfo{NewSrcInfo(ct.Src)}
 	}
 	srcArr := strings.Split(ct.Src, PathListSeparatorStr)
 	rs := make([]SrcInfo, len(srcArr))
 	for index := range srcArr {
-		rs[index] = NewSrcInfo(srcArr[index], withCase)
+		rs[index] = NewSrcInfo(srcArr[index])
 	}
 	return rs
 }

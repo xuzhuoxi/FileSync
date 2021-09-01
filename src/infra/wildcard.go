@@ -28,7 +28,7 @@ func (w Wildcard) IsWildcard() bool {
 }
 
 // 匹配判断
-func (w Wildcard) Match(value string, withCase bool) bool {
+func (w Wildcard) Match(value string) bool {
 	// 长度不足
 	wildcard := string(w)
 	if len(value) < len(wildcard) {
@@ -47,12 +47,6 @@ func (w Wildcard) Match(value string, withCase bool) bool {
 		return true
 	}
 
-	// 大小写处理
-	if !withCase {
-		value = strings.ToLower(value)
-		wildcard = strings.ToLower(wildcard)
-	}
-
 	ws := strings.Split(wildcard, WildcardCharStr)
 	checkValue := value
 	for _, w := range ws {
@@ -68,13 +62,7 @@ func (w Wildcard) Match(value string, withCase bool) bool {
 // 匹配判断
 // 大小写相关
 func (w Wildcard) MatchWithCase(value string) bool {
-	return w.Match(value, true)
-}
-
-// 匹配判断
-// 大小写无关
-func (w Wildcard) MatchWithoutCase(value string) bool {
-	return w.Match(value, false)
+	return w.Match(value)
 }
 
 // 解释通配符信息

@@ -8,24 +8,34 @@ import (
 )
 
 type IPathInfo interface {
+	// 基于(运行目录/配置文件目录) 的相对路径
 	GetRelativeRoot() string
+	// 基于RelativeRoot的相对路径
 	GetRootSubPath() string
+	// 文件或目录信息
 	GetFileInfo() fs.FileInfo
 
+	// 完整相对路径
 	GetRelativePath() string
+	// 完整绝对路径
 	GetFullPath() string
 
+	// 基于新的RelativeRoot生成完整相对路径
 	GenRelativePath(relativeRoot string) string
+	// 基于新的RelativeRoot生成完整绝对路径
 	GenFullPath(relativeRoot string) string
+
+	// 比较
+	LessTo(target IPathInfo) bool
 }
 
 type pathInfo struct {
-	RelativeRoot string      // 基于 运行时 或 配置文件目录 的相对路径
-	RootSubPath  string      // 基于 RelativeRoot 的相对路径
+	RelativeRoot string      // 基于(运行目录/配置文件目录) 的相对路径
+	RootSubPath  string      // 基于RelativeRoot的相对路径
 	FileInfo     fs.FileInfo // 文件或目录信息
 
-	relativePath string
-	fullPath     string
+	relativePath string // 临时补全的完整相对路径,基于(运行目录/配置文件目录)
+	fullPath     string // 临时补全的完整绝对路径
 }
 
 func (i *pathInfo) GetRelativeRoot() string {
@@ -62,6 +72,17 @@ func (i *pathInfo) GenFullPath(relativeRoot string) string {
 	return filex.Combine(infra.RunningDir, relativeRoot, i.RootSubPath)
 }
 
+func (i *pathInfo) LessTo(target IPathInfo) bool {
+	rpi := i.GetRelativePath()
+	rpj := target.GetRelativePath()
+	lenI := infra.GetRuneCount(rpi, infra.DirSeparator)
+	lenJ := infra.GetRuneCount(rpj, infra.DirSeparator)
+	if lenI != lenJ {
+		return lenI > lenJ
+	}
+	return rpi < rpj
+}
+
 type IPathInfoList interface {
 	sort.Interface
 	// 排序
@@ -93,14 +114,7 @@ func (l *pathInfoList) Len() int {
 }
 
 func (l *pathInfoList) Less(i, j int) bool {
-	rpi := l.ItemArray[i].GetRelativePath()
-	rpj := l.ItemArray[j].GetRelativePath()
-	lenI := infra.GetRuneCount(rpi, infra.DirSeparator)
-	lenJ := infra.GetRuneCount(rpj, infra.DirSeparator)
-	if lenI != lenJ {
-		return lenI > lenJ
-	}
-	return rpi < rpj
+	return l.ItemArray[i].LessTo(l.ItemArray[j])
 }
 
 func (l *pathInfoList) Swap(i, j int) {

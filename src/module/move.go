@@ -17,11 +17,12 @@ func newMoveExecutor() IModeExecutor {
 type moveExecutor struct {
 	target *infra.RuntimeTarget
 
-	logger  logx.ILogger
-	ignore  bool // 处理复制列表时使用
-	recurse bool // 处理复制列表时使用
-	stable  bool // 处理复制列表时使用
-	update  bool // 真实复制时使用
+	logger     logx.ILogger
+	ignore     bool // 忽略空目录，查找文件时使用
+	recurse    bool // 递归，查找文件时使用
+	stable     bool // 保持目录结构，处理文件时使用
+	timeUpdate bool // 只处理新时间文件，处理文件时使用
+	sizeUpdate bool // 只处理size更大文件，处理文件时使用
 
 	searcher    internal.IPathSearcher
 	tempSrcInfo infra.SrcInfo
@@ -57,10 +58,11 @@ func (e *moveExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 func (e *moveExecutor) initArgs() {
 	argsMark := e.target.ArgsMark
 	e.logger = infra.GenLogger(argsMark)
-	e.ignore = argsMark.MatchArg(infra.ArgIgnoreEmpty)
-	e.recurse = argsMark.MatchArg(infra.ArgRecurse)
-	e.stable = argsMark.MatchArg(infra.ArgStable)
-	e.update = argsMark.MatchArg(infra.ArgUpdate)
+	e.ignore = argsMark.MatchArg(infra.MarkIgnoreEmpty)
+	e.recurse = argsMark.MatchArg(infra.MarkRecurse)
+	e.stable = argsMark.MatchArg(infra.MarkStable)
+	e.timeUpdate = argsMark.MatchArg(infra.MarkTimeUpdate)
+	e.sizeUpdate = argsMark.MatchArg(infra.MarkSizeUpdate)
 
 	e.searcher.SetParams(e.recurse, !e.ignore, e.logger)
 }
@@ -72,7 +74,7 @@ func (e *moveExecutor) initExecuteList() {
 		e.tempSrcInfo = src
 		e.searcher.Search(src.FormattedSrc, src.IncludeSelf)
 	}
-	e.searcher.SortResult()
+	e.searcher.SortResults()
 }
 
 func (e *moveExecutor) execList() {
@@ -80,27 +82,33 @@ func (e *moveExecutor) execList() {
 	resultLen := len(results)
 	e.logger.Infoln(fmt.Sprintf("[move] Start(RunningPath='%s', Len=%d).", infra.RunningDir, resultLen))
 	count := 0
-	var fileInfo os.FileInfo
+	var srcFileInfo os.FileInfo
 	var tarFull string
-	for _, moveInfo := range results {
-		fileInfo = moveInfo.GetFileInfo()
+	for _, srcPathInfo := range results {
+		srcFileInfo = srcPathInfo.GetFileInfo()
 		// 忽略目录
-		if fileInfo.IsDir() {
+		if srcFileInfo.IsDir() {
 			continue
 		}
-		_, tarFull = internal.GetTarPaths(moveInfo, e.stable, e.target.Tar)
-		// 忽略新文件
-		if e.update && !infra.CheckPathByTime(tarFull, fileInfo.ModTime()) {
-			e.logger.Infoln(fmt.Sprintf("[move] Ignore by '/u': '%s'", moveInfo.GetRelativePath()))
-			continue
+		_, tarFull = internal.GetTarPaths(srcPathInfo, e.stable, e.target.Tar)
+		tarFileInfo := infra.GetFileInfo(tarFull)
+		if nil != tarFileInfo {
+			if e.timeUpdate && !infra.CompareWithTime(srcFileInfo, tarFileInfo) { // 忽略目标新文件
+				e.logger.Infoln(fmt.Sprintf("[move] Ignore by '%s': '%s'", infra.ArgTimeUpdate, srcPathInfo.GetRelativePath()))
+				continue
+			}
+			if e.sizeUpdate && !infra.CompareWithSize(srcFileInfo, tarFileInfo) { // 忽略目标大文件
+				e.logger.Infoln(fmt.Sprintf("[move] Ignore by '%s': '%s'", infra.ArgSizeUpdate, srcPathInfo.GetRelativePath()))
+				continue
+			}
 		}
-		e.doMoveFile(moveInfo)
+		e.doMoveFile(srcPathInfo)
 		count += 1
 	}
 	for _, moveInfo := range results {
-		fileInfo = moveInfo.GetFileInfo()
+		srcFileInfo = moveInfo.GetFileInfo()
 		// 忽略文件
-		if !fileInfo.IsDir() {
+		if !srcFileInfo.IsDir() {
 			continue
 		}
 		srcFull := moveInfo.GetFullPath()

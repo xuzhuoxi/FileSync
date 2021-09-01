@@ -5,6 +5,9 @@ import (
 	"github.com/xuzhuoxi/infra-go/filex"
 )
 
+// 生成目录路径，
+// relativePath: 目标相对路径
+// fullPath: 目标绝对路径
 func GetTarPaths(pathInfo IPathInfo, stable bool, tarRelative string) (relativePath, fullPath string) {
 	fileInfo := pathInfo.GetFileInfo()
 	if stable { // 保持目录结构

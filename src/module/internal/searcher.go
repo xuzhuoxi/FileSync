@@ -18,7 +18,7 @@ type CheckFitting func(fileInfo os.FileInfo) bool
 type IPathSearcher interface {
 	// 设置
 	SetParams(recurse, dirInclude bool, logger logx.ILogger)
-	// 设置
+	// 设置过滤行为
 	SetFitting(fileFitting, dirFitting CheckFitting)
 
 	// 初始化
@@ -26,7 +26,7 @@ type IPathSearcher interface {
 	// 查找
 	Search(RelativeRoot string, checkRoot bool)
 	// 结果排序
-	SortResult()
+	SortResults()
 	// 取结果
 	GetResults() []IPathInfo
 	// 结果数量
@@ -34,13 +34,13 @@ type IPathSearcher interface {
 }
 
 type pathSearcher struct {
-	recurse    bool // 是否递归
-	dirInclude bool // 是否记录目录
-	logger     logx.ILogger
+	recurse    bool         // 是否递归
+	dirInclude bool         // 是否记录目录
+	logger     logx.ILogger // 日志记录
 
-	fileFitting CheckFitting
-	dirFitting  CheckFitting
-	resultList  IPathInfoList
+	fileFitting CheckFitting  // 文件过滤函数,nil时不过滤
+	dirFitting  CheckFitting  // 目录过滤函数,nil时不过滤
+	resultList  IPathInfoList // 结果列表
 }
 
 func (e *pathSearcher) SetParams(recurse, dirInclude bool, logger logx.ILogger) {
@@ -75,7 +75,7 @@ func (e *pathSearcher) Search(relativeRoot string, checkRoot bool) {
 	}
 }
 
-func (e *pathSearcher) SortResult() {
+func (e *pathSearcher) SortResults() {
 	e.resultList.Sort()
 	//for _, info := range e.resultList.GetAll() {
 	//	fmt.Println("列表：", info.GetRelativePath())
