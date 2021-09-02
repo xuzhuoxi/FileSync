@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/xuzhuoxi/FileSync/src/infra"
 	"github.com/xuzhuoxi/FileSync/src/module/internal"
-	"github.com/xuzhuoxi/infra-go/filex"
 	"github.com/xuzhuoxi/infra-go/logx"
 	"os"
 	"strings"
@@ -108,14 +107,8 @@ func (e *copyExecutor) execList() {
 
 func (e *copyExecutor) doCopy(pathInfo internal.IPathInfo) {
 	tarRelative, tarFull := internal.GetTarPaths(pathInfo, e.stable, e.target.Tar)
-	fileInfo := pathInfo.GetFileInfo()
 	e.logger.Infoln(fmt.Sprintf("[copy] Copy '%s' => '%s'", pathInfo.GetRelativePath(), tarRelative))
-	if fileInfo.IsDir() {
-		os.MkdirAll(tarFull, fileInfo.Mode())
-	} else {
-		filex.CopyAuto(pathInfo.GetFullPath(), tarFull, fileInfo.Mode())
-	}
-	infra.SetModTime(tarFull, fileInfo.ModTime())
+	internal.DoCopy(pathInfo.GetFullPath(), tarFull, nil)
 }
 
 func (e *copyExecutor) fileFitting(fileInfo os.FileInfo) bool {

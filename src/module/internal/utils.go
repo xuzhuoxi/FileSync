@@ -51,12 +51,10 @@ func DoMove(srcPath, tarPath string, doFilter func(srcFileInfo, tarFileInfo os.F
 
 	if nil != tarFileInfo {
 		filex.Remove(tarPath)
-		filex.Copy(srcPath, tarPath)
-		infra.SetModTime(tarPath, srcFileInfo.ModTime())
 	} else {
 		filex.CompleteParentPath(tarPath, srcFileInfo.Mode())
-		os.Rename(srcPath, tarPath)
 	}
+	os.Rename(srcPath, tarPath)
 
 	if !srcFileInfo.IsDir() || filex.IsEmptyDir(srcPath) {
 		filex.Remove(srcPath)
