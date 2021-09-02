@@ -50,12 +50,16 @@ func (e *moveExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 		return
 	}
 	e.target = target
-	e.initArgs()
+	err := e.initArgs()
+	if nil != err {
+		infra.Logger.Errorln(fmt.Sprintf("[move] Init args error='%s'", err))
+		return
+	}
 	e.initExecuteList()
 	e.execList()
 }
 
-func (e *moveExecutor) initArgs() {
+func (e *moveExecutor) initArgs() error {
 	argsMark := e.target.ArgsMark
 	e.logger = infra.GenLogger(argsMark)
 	e.ignore = argsMark.MatchArg(infra.MarkIgnoreEmpty)
@@ -65,6 +69,7 @@ func (e *moveExecutor) initArgs() {
 	e.sizeUpdate = argsMark.MatchArg(infra.MarkSizeUpdate)
 
 	e.searcher.SetParams(e.recurse, !e.ignore, e.logger)
+	return nil
 }
 
 func (e *moveExecutor) initExecuteList() {
@@ -93,12 +98,12 @@ func (e *moveExecutor) execList() {
 		_, tarFull = internal.GetTarPaths(srcPathInfo, e.stable, e.target.Tar)
 		tarFileInfo := infra.GetFileInfo(tarFull)
 		if nil != tarFileInfo {
-			if e.timeUpdate && !infra.CompareWithTime(srcFileInfo, tarFileInfo) { // 忽略目标新文件
-				e.logger.Infoln(fmt.Sprintf("[move] Ignore by '%s': '%s'", infra.ArgTimeUpdate, srcPathInfo.GetRelativePath()))
+			if e.timeUpdate && infra.CompareWithTime(srcFileInfo, tarFileInfo) <= 0 { // 忽略目标新文件
+				e.logger.Infoln(fmt.Sprintf("[move] Ignored by '%s':'%s'", infra.ArgTimeUpdate, srcPathInfo.GetRelativePath()))
 				continue
 			}
-			if e.sizeUpdate && !infra.CompareWithSize(srcFileInfo, tarFileInfo) { // 忽略目标大文件
-				e.logger.Infoln(fmt.Sprintf("[move] Ignore by '%s': '%s'", infra.ArgSizeUpdate, srcPathInfo.GetRelativePath()))
+			if e.sizeUpdate && infra.CompareWithSize(srcFileInfo, tarFileInfo) <= 0 { // 忽略目标大文件
+				e.logger.Infoln(fmt.Sprintf("[move] Ignored by '%s':'%s'", infra.ArgSizeUpdate, srcPathInfo.GetRelativePath()))
 				continue
 			}
 		}
@@ -137,7 +142,7 @@ func (e *moveExecutor) doMoveDir(pathInfo internal.IPathInfo) {
 
 	fileInfo := pathInfo.GetFileInfo()
 	if filex.IsDir(tarFull) { // 目录存在
-		infra.CloneTime(tarFull, fileInfo)
+		infra.SetModTime(tarFull, fileInfo.ModTime())
 		filex.Remove(pathInfo.GetFullPath())
 		return
 	}

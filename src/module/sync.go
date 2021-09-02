@@ -1,6 +1,7 @@
 package module
 
 import (
+	"errors"
 	"fmt"
 	"github.com/xuzhuoxi/FileSync/src/infra"
 	"github.com/xuzhuoxi/FileSync/src/module/internal"
@@ -16,12 +17,15 @@ func newSyncExecutor() IModeExecutor {
 
 type syncExecutor struct {
 	target *infra.RuntimeTarget
+	srcDir string
+	tarDir string
 
-	logger  logx.ILogger
-	double  bool // 双向同步
-	ignore  bool // 忽略空目录，查找文件时使用
-	recurse bool // 保持目录结构，处理文件时使用
-	update  bool // 只处理新时间文件，处理文件时使用
+	logger     logx.ILogger
+	double     bool // 双向同步
+	ignore     bool // 忽略空目录，查找文件时使用
+	recurse    bool // 保持目录结构，处理文件时使用
+	timeUpdate bool // 只处理新时间文件，处理文件时使用
+	sizeUpdate bool // 只处理size更大文件，处理文件时使用
 
 	srcList internal.IPathSearcher
 	tarList internal.IPathSearcher
@@ -53,30 +57,49 @@ func (e *syncExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 		infra.Logger.Errorln(fmt.Sprintf("[sync] Src Len Err! "))
 		return
 	}
-	if target.SrcArr[0].FormattedSrc == "" || strings.TrimSpace(target.SrcArr[0].FormattedSrc) == "" {
+	e.srcDir = strings.TrimSpace(target.SrcArr[0].FormattedSrc)
+	if e.srcDir == "" {
 		infra.Logger.Errorln(fmt.Sprintf("[sync] Src Empty Err! "))
 		return
 	}
-	if target.Tar == "" || strings.TrimSpace(target.Tar) == "" {
+	e.tarDir = strings.TrimSpace(target.Tar)
+	if e.tarDir == "" {
 		infra.Logger.Errorln(fmt.Sprintf("[sync] Tar Empty Err! "))
 		return
 	}
 	e.target = target
-	e.initArgs()
+	err := e.initArgs()
+	if nil != err {
+		infra.Logger.Errorln(fmt.Sprintf("[sync] Init args error='%s'", err))
+		return
+	}
 	e.initExecuteList()
 	e.execList()
 }
 
-func (e *syncExecutor) initArgs() {
+func (e *syncExecutor) initArgs() (err error) {
 	argsMark := e.target.ArgsMark
 	e.logger = infra.GenLogger(argsMark)
 	e.double = argsMark.MatchArg(infra.MarkDouble)
 	e.ignore = argsMark.MatchArg(infra.MarkIgnoreEmpty)
 	e.recurse = argsMark.MatchArg(infra.MarkRecurse)
-	e.update = argsMark.MatchArg(infra.MarkTimeUpdate)
+	e.timeUpdate = argsMark.MatchArg(infra.MarkTimeUpdate)
+	e.sizeUpdate = argsMark.MatchArg(infra.MarkSizeUpdate)
+
+	if e.double && e.timeUpdate && e.sizeUpdate {
+		err = errors.New(fmt.Sprintf("[sync] Error with args: '%s'存在时,'%s'与'%s'互斥! ",
+			infra.ArgDouble, infra.ArgTimeUpdate, infra.ArgSizeUpdate))
+		return
+	}
+	if !e.timeUpdate && !e.sizeUpdate {
+		err = errors.New(fmt.Sprintf("[sync] Error with args: '%s'不存在时,'%s'与'%s'有且至少有一个! ",
+			infra.ArgDouble, infra.ArgTimeUpdate, infra.ArgSizeUpdate))
+		return
+	}
 
 	e.srcList.SetParams(e.recurse, !e.ignore, e.logger)
 	e.tarList.SetParams(e.recurse, !e.ignore, e.logger)
+	return nil
 }
 
 func (e *syncExecutor) initExecuteList() {
@@ -98,18 +121,119 @@ func (e *syncExecutor) initExecuteList() {
 }
 
 func (e *syncExecutor) execList() {
-	e.logger.Infoln(fmt.Sprintf("Mixed Len=%d", len(e.mixedArr)))
+	e.execMixedList()
+	e.execSrcNew()
+	e.execTarNew()
+}
+
+func (e *syncExecutor) execMixedList() {
+	e.logger.Infoln(fmt.Sprintf("[sync] Mixed Len=%d", len(e.mixedArr)))
+	if e.double {
+		e.execMixedDouble()
+	} else {
+		e.execMixedMirroring()
+	}
+}
+
+// 镜像处理共同文件
+func (e *syncExecutor) execMixedDouble() {
 	for _, m := range e.mixedArr {
-		e.logger.Infoln("\t", m.GetRootSubPath())
+		srcRelative := m.GetRelativePath()
+		srcFull := m.GetFullPath()
+		tarRelative := m.GenRelativePath(e.tarDir)
+		tarFull := m.GenFullPath(e.tarDir)
+		srcFileInfo := infra.GetFileInfo(srcFull)
+		tarFileInfo := infra.GetFileInfo(tarFull)
+		if e.timeUpdate {
+			cr := infra.CompareWithTime(srcFileInfo, tarFileInfo)
+			if cr == 0 {
+				e.logger.Infoln(fmt.Sprintf("[sync] Ignored by '%s':'%s'", infra.ArgTimeUpdate, srcRelative))
+				continue
+			}
+			if cr > 0 {
+				e.src2tar(srcRelative, srcFull, tarRelative, tarFull)
+			} else {
+				e.tar2src(srcRelative, srcFull, tarRelative, tarFull)
+			}
+			continue
+		}
+		if e.sizeUpdate {
+			cr := infra.CompareWithSize(srcFileInfo, tarFileInfo)
+			if cr == 0 {
+				e.logger.Infoln(fmt.Sprintf("[sync] Ignored by '%s':'%s'", infra.ArgSizeUpdate, srcRelative))
+				continue
+			}
+			if cr > 0 {
+				e.src2tar(srcRelative, srcFull, tarRelative, tarFull)
+			} else {
+				e.tar2src(srcRelative, srcFull, tarRelative, tarFull)
+			}
+			continue
+		}
+		e.logger.Infoln(fmt.Sprintf("[sync] Ignored by doesn't meet the conditions:'%s'", srcRelative))
 	}
-	e.logger.Infoln(fmt.Sprintf("SrcNew Len=%d", len(e.srcNewArr)))
+}
+
+// 镜像处理共同文件
+func (e *syncExecutor) execMixedMirroring() {
+	for _, m := range e.mixedArr {
+		srcRelative := m.GetRelativePath()
+		srcFull := m.GetFullPath()
+		tarRelative := m.GenRelativePath(e.tarDir)
+		tarFull := m.GenFullPath(e.tarDir)
+		srcFileInfo := infra.GetFileInfo(srcFull)
+		tarFileInfo := infra.GetFileInfo(tarFull)
+		if e.timeUpdate && infra.CompareWithTime(srcFileInfo, tarFileInfo) <= 0 {
+			e.logger.Infoln(fmt.Sprintf("[sync] Ignored by '%s':'%s'", infra.ArgTimeUpdate, srcRelative))
+			continue
+		}
+		if e.sizeUpdate && infra.CompareWithSize(srcFileInfo, tarFileInfo) <= 0 {
+			e.logger.Infoln(fmt.Sprintf("[sync] Ignored by '%s':'%s'", infra.ArgSizeUpdate, srcRelative))
+			continue
+		}
+		e.src2tar(srcRelative, srcFull, tarRelative, tarFull)
+	}
+}
+
+func (e *syncExecutor) src2tar(srcRelative, srcFull string, tarRelative, tarFull string) {
+	e.logger.Infoln(fmt.Sprintf("[sync] '%s' => '%s'", srcRelative, tarRelative))
+	internal.DoCopy(srcFull, tarFull, nil)
+}
+
+func (e *syncExecutor) tar2src(srcRelative, srcFull string, tarRelative, tarFull string) {
+	e.logger.Infoln(fmt.Sprintf("[sync] '%s' <= '%s'", srcRelative, tarRelative))
+	internal.DoCopy(tarFull, srcFull, nil)
+}
+
+func (e *syncExecutor) execSrcNew() {
+	e.logger.Infoln(fmt.Sprintf("[sync] SrcNew Len=%d", len(e.srcNewArr)))
 	for _, sn := range e.srcNewArr {
-		e.logger.Infoln("\t", sn.GetRootSubPath())
+		tarFull := sn.GenFullPath(e.tarDir)
+		e.logger.Infoln(fmt.Sprintf("[sync] '%s' => '%s'", sn.GetRelativePath(), sn.GenRelativePath(e.tarDir)))
+		internal.DoCopy(sn.GetFullPath(), tarFull, nil)
 	}
-	e.logger.Infoln(fmt.Sprintf("TarNew Len=%d", len(e.tarNewArr)))
+}
+
+func (e *syncExecutor) execTarNew() {
+	if !e.double {
+		return
+	}
+	e.logger.Infoln(fmt.Sprintf("[sync] TarNew Len=%d", len(e.tarNewArr)))
 	for _, tn := range e.tarNewArr {
-		e.logger.Infoln("\t", tn.GetRootSubPath())
+		srcFull := tn.GenFullPath(e.srcDir)
+		e.logger.Infoln(fmt.Sprintf("[sync] '%s' <= '%s'", tn.GenRelativePath(e.srcDir), tn.GetRelativePath()))
+		internal.DoCopy(tn.GetFullPath(), srcFull, nil)
 	}
+}
+
+func (e *syncExecutor) overrideFilter(srcFileInfo, tarFileInfo os.FileInfo) bool {
+	if e.timeUpdate && infra.CompareWithTime(srcFileInfo, tarFileInfo) <= 0 {
+		return false
+	}
+	if e.sizeUpdate && infra.CompareWithSize(srcFileInfo, tarFileInfo) <= 0 {
+		return false
+	}
+	return true
 }
 
 func (e *syncExecutor) fileFitting(fileInfo os.FileInfo) bool {
@@ -170,15 +294,13 @@ func (e *syncExecutor) OperateSets() {
 		e.srcNewArr = append(e.srcNewArr, srcArr[idx0])
 		idx0 += 1
 	}
-	if e.double { // 双向
-		e.tarNewArr = make([]internal.IPathInfo, 0, tLen-sameSize)
-		for idx0, idx1 = 0, 0; idx0 < tLen; {
-			if idx1 < sameSize && idx0 == srcIdxArr[idx1] { // 相同
-				idx0, idx1 = idx0+1, idx1+1
-				continue
-			}
-			e.tarNewArr = append(e.tarNewArr, tarArr[idx0])
-			idx0 += 1
+	e.tarNewArr = make([]internal.IPathInfo, 0, tLen-sameSize)
+	for idx0, idx1 = 0, 0; idx0 < tLen; {
+		if idx1 < sameSize && idx0 == srcIdxArr[idx1] { // 相同
+			idx0, idx1 = idx0+1, idx1+1
+			continue
 		}
+		e.tarNewArr = append(e.tarNewArr, tarArr[idx0])
+		idx0 += 1
 	}
 }

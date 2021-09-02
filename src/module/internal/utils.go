@@ -3,6 +3,7 @@ package internal
 import (
 	"github.com/xuzhuoxi/FileSync/src/infra"
 	"github.com/xuzhuoxi/infra-go/filex"
+	"os"
 )
 
 // 生成目录路径，
@@ -17,4 +18,47 @@ func GetTarPaths(pathInfo IPathInfo, stable bool, tarRelative string) (relativeP
 	}
 	fullPath = filex.Combine(infra.RunningDir, relativePath)
 	return
+}
+
+// 复制
+func DoCopy(srcPath, tarPath string, doFilter func(srcFileInfo, tarFileInfo os.FileInfo) bool) {
+	srcFileInfo := infra.GetFileInfo(srcPath)
+	if nil == srcFileInfo {
+		return
+	}
+	tarFileInfo := infra.GetFileInfo(tarPath)
+	if nil != doFilter && !doFilter(srcFileInfo, tarFileInfo) {
+		return
+	}
+	if srcFileInfo.IsDir() {
+		os.MkdirAll(tarPath, srcFileInfo.Mode())
+	} else {
+		filex.CopyAuto(srcPath, tarPath, srcFileInfo.Mode())
+	}
+	infra.SetModTime(tarPath, srcFileInfo.ModTime())
+}
+
+// 移动
+func DoMove(srcPath, tarPath string, doFilter func(srcFileInfo, tarFileInfo os.FileInfo) bool) {
+	srcFileInfo := infra.GetFileInfo(srcPath)
+	if nil == srcFileInfo {
+		return
+	}
+	tarFileInfo := infra.GetFileInfo(tarPath)
+	if nil != doFilter && !doFilter(srcFileInfo, tarFileInfo) {
+		return
+	}
+
+	if nil != tarFileInfo {
+		filex.Remove(tarPath)
+		filex.Copy(srcPath, tarPath)
+		infra.SetModTime(tarPath, srcFileInfo.ModTime())
+	} else {
+		filex.CompleteParentPath(tarPath, srcFileInfo.Mode())
+		os.Rename(srcPath, tarPath)
+	}
+
+	if !srcFileInfo.IsDir() || filex.IsEmptyDir(srcPath) {
+		filex.Remove(srcPath)
+	}
 }

@@ -45,15 +45,20 @@ func (e *clearExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 		return
 	}
 	e.target = target
-	e.initArgs()
+	err := e.initArgs()
+	if nil != err {
+		infra.Logger.Errorln(fmt.Sprintf("[clear] Init args error='%s'", err))
+		return
+	}
 	e.initExecuteList()
 	e.execList()
 }
 
-func (e *clearExecutor) initArgs() {
+func (e *clearExecutor) initArgs() error {
 	argsMark := e.target.ArgsMark
 	e.logger = infra.GenLogger(argsMark)
 	e.recurse = argsMark.MatchArg(infra.MarkRecurse)
+	return nil
 }
 
 func (e *clearExecutor) initExecuteList() {

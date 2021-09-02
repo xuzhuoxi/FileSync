@@ -45,15 +45,20 @@ func (e *deleteExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 		return
 	}
 	e.target = target
-	e.initArgs()
+	err := e.initArgs()
+	if nil != err {
+		infra.Logger.Errorln(fmt.Sprintf("[delete] Init args error='%s'", err))
+		return
+	}
 	e.initExecuteList()
 	e.execList()
 }
 
-func (e *deleteExecutor) initArgs() {
+func (e *deleteExecutor) initArgs() error {
 	argsMark := e.target.ArgsMark
 	e.logger = infra.GenLogger(argsMark)
 	e.recurse = argsMark.MatchArg(infra.MarkRecurse)
+	return nil
 }
 
 func (e *deleteExecutor) initExecuteList() {
@@ -63,7 +68,7 @@ func (e *deleteExecutor) initExecuteList() {
 		path := filex.Combine(infra.RunningDir, src.FormattedSrc)
 		fileInfo, err := os.Stat(path)
 		if err != nil && !os.IsExist(err) { //不存在
-			e.logger.Warnln(fmt.Sprintf("[clear] Ignore src[%d]: %s", index, src.OriginalSrc))
+			e.logger.Warnln(fmt.Sprintf("[clear] Ignore src[%d]:%s", index, src.OriginalSrc))
 			continue
 		}
 		if fileInfo.IsDir() {
