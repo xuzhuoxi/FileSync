@@ -48,7 +48,7 @@ func parseFlags() (targets []infra.ConfigTarget, err error) {
 	file := flag.String("file", "", "Running mode! ")
 	main := flag.String("main", "", "Main! ")
 
-	mode := flag.String("module", "", "Running mode! ")
+	mode := flag.String("mode", "", "Running mode! ")
 	src := flag.String("src", "", "Src path or Src paths! ")
 	tar := flag.String("tar", "", "Tar path! ")
 	include := flag.String("include", "", "Include settings! ")

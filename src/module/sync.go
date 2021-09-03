@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/xuzhuoxi/FileSync/src/infra"
 	"github.com/xuzhuoxi/FileSync/src/module/internal"
+	"github.com/xuzhuoxi/infra-go/filex"
 	"github.com/xuzhuoxi/infra-go/logx"
 	"github.com/xuzhuoxi/infra-go/mathx"
 	"os"
@@ -215,14 +216,19 @@ func (e *syncExecutor) execSrcNew() {
 }
 
 func (e *syncExecutor) execTarNew() {
-	if !e.double {
-		return
-	}
 	e.logger.Infoln(fmt.Sprintf("[sync] TarNew Len=%d", len(e.tarNewArr)))
-	for _, tn := range e.tarNewArr {
-		srcFull := tn.GenFullPath(e.srcDir)
-		e.logger.Infoln(fmt.Sprintf("[sync] '%s' <= '%s'", tn.GenRelativePath(e.srcDir), tn.GetRelativePath()))
-		internal.DoCopy(tn.GetFullPath(), srcFull, nil)
+	if e.double {
+		for _, tn := range e.tarNewArr {
+			srcFull := tn.GenFullPath(e.srcDir)
+			tarFull := tn.GetFullPath()
+			e.logger.Infoln(fmt.Sprintf("[sync] '%s' <= '%s'", tn.GenRelativePath(e.srcDir), tn.GetRelativePath()))
+			internal.DoCopy(tarFull, srcFull, nil)
+		}
+	} else {
+		for _, tn := range e.tarNewArr {
+			e.logger.Infoln(fmt.Sprintf("[sync] delete '%s'", tn.GetRelativePath()))
+			filex.Remove(tn.GetFullPath())
+		}
 	}
 }
 
