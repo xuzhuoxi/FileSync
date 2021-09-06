@@ -54,6 +54,7 @@ func NewRuntimeTarget(target ConfigTarget) (runtimeTarget *RuntimeTarget, err er
 }
 
 type RuntimeTarget struct {
+	RelativeRoot string      // 相对路径的根目录
 	Name         string      // 任务名称，用于唯一标识配置
 	Mode         RuntimeMode // 任务模式，RuntimeMode
 	SrcArr       []SrcInfo   // 任务源信息

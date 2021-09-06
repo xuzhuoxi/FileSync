@@ -19,6 +19,7 @@ func main() {
 		return
 	}
 	infra.Logger.Infoln(fmt.Sprintf("[main] Target number=%d", len(cfgTargets)))
+	infra.Logger.Infoln(fmt.Sprintf("[main] RunningRelativeRoot='%s'", infra.RunningDir))
 	execTargets(cfgTargets)
 }
 
@@ -58,7 +59,7 @@ func parseFlags() (targets []infra.ConfigTarget, err error) {
 	flag.Parse()
 
 	if *file != "" {
-		targets, err = loadTargets(*file, *main)
+		targets, err = loadConfigTargets(*file, *main)
 	} else {
 		target := genTarget(fmt.Sprintf("Cmd.%s", *mode), *mode, *src, *tar, *include, *exclude, *args)
 		targets = []infra.ConfigTarget{target}
@@ -72,12 +73,18 @@ func genTarget(name, mode, src, tar, include, exclude string, args string) (targ
 		Name: name, Mode: mode, Src: src, Tar: tar, Include: include, Exclude: exclude, Args: args}
 }
 
-func loadTargets(relativeFilePath string, main string) (targets []infra.ConfigTarget, err error) {
+func loadConfigTargets(relativeFilePath string, main string) (targets []infra.ConfigTarget, err error) {
 	cfgPath := filex.Combine(infra.RunningDir, relativeFilePath)
 	config := &infra.Config{}
 	err = loadConfigFile(cfgPath, config)
 	if nil != err {
 		return
+	}
+	if "" != config.RelativeRoot {
+		infra.SetRunningDir(filex.FormatPath(config.RelativeRoot))
+	} else {
+		upDir, _ := filex.GetUpDir(cfgPath)
+		infra.SetRunningDir(upDir)
 	}
 	if "" == main {
 		return config.MainTargets(), nil
@@ -86,8 +93,6 @@ func loadTargets(relativeFilePath string, main string) (targets []infra.ConfigTa
 	if len(targets) == 0 {
 		err = errors.New(fmt.Sprintf("No targets with name '%s'", main))
 	}
-	upDir, _ := filex.GetUpDir(cfgPath)
-	infra.SetRunningDir(upDir)
 	return
 }
 

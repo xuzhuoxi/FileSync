@@ -85,9 +85,10 @@ type ConfigGroup struct {
 }
 
 type Config struct {
-	Main    string         `yaml:"main"`
-	Groups  []ConfigGroup  `yaml:"groups"`
-	Targets []ConfigTarget `yaml:"targets"`
+	RelativeRoot string         `yaml:"root"` // 相对路径的根目录
+	Main         string         `yaml:"main"`
+	Groups       []ConfigGroup  `yaml:"groups"`
+	Targets      []ConfigTarget `yaml:"targets"`
 }
 
 // 配置主任务列表

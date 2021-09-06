@@ -1,3 +1,4 @@
+root: "c:/root"
 main: 'sync'
 groups:
   - name: 'all'
