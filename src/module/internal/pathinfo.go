@@ -73,14 +73,14 @@ func (i *pathInfo) GenFullPath(relativeRoot string) string {
 }
 
 func (i *pathInfo) LessTo(target IPathInfo) bool {
+	dirI := i.FileInfo.IsDir()
+	dirJ := target.GetFileInfo().IsDir()
 	rpi := i.GetRelativePath()
 	rpj := target.GetRelativePath()
-	lenI := infra.GetRuneCount(rpi, infra.DirSeparator)
-	lenJ := infra.GetRuneCount(rpj, infra.DirSeparator)
-	if lenI != lenJ {
-		return lenI > lenJ
+	if dirI == dirJ {
+		return rpi < rpj
 	}
-	return rpi < rpj
+	return dirJ
 }
 
 type IPathInfoList interface {

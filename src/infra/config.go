@@ -24,8 +24,22 @@ type ConfigTarget struct {
 }
 
 func (ct ConfigTarget) String() string {
+	return ct.ToFullString()
+}
+
+func (ct ConfigTarget) ToFullString() string {
 	return fmt.Sprintf("ConfigTarget[Name='%s',Mode='%s',Src='%s',Tar='%s',Include='%s',Exclude='%s',Args='%s']",
 		ct.Name, ct.Mode, ct.Src, ct.Tar, ct.Include, ct.Exclude, ct.Args)
+}
+
+func (ct ConfigTarget) ToShortString() string {
+	return fmt.Sprintf("ConfigTarget{Name='%s',Mode='%s',Include='%s',Exclude='%s',Args='%s'}",
+		ct.Name, ct.Mode, ct.Include, ct.Exclude, ct.Args)
+}
+
+func (ct ConfigTarget) ToPathString() string {
+	return fmt.Sprintf("ConfigTarget{Name='%s',Src='%s',Tar='%s'}",
+		ct.Name, ct.Src, ct.Tar)
 }
 
 func (ct ConfigTarget) GetMode() RuntimeMode {

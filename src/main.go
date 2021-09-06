@@ -20,6 +20,7 @@ func main() {
 	}
 	infra.Logger.Infoln(fmt.Sprintf("[main] Target number=%d", len(cfgTargets)))
 	infra.Logger.Infoln(fmt.Sprintf("[main] RunningRelativeRoot='%s'", infra.RunningDir))
+	infra.Logger.Println()
 	execTargets(cfgTargets)
 }
 
@@ -39,7 +40,8 @@ func execTarget(cfgTarget infra.ConfigTarget) {
 		return
 	}
 	executor := module.GetExecutor(cfgTarget.GetMode())
-	infra.Logger.Infoln(fmt.Sprintf("[main] Target=%v", cfgTarget))
+	infra.Logger.Infoln(fmt.Sprintf("[main] TargetInfo=%v", cfgTarget.ToShortString()))
+	infra.Logger.Infoln(fmt.Sprintf("[main] TargetPath=%v", cfgTarget.ToPathString()))
 	executor.ExecConfigTarget(cfgTarget)
 }
 

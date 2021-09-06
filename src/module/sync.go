@@ -141,7 +141,6 @@ func (e *syncExecutor) execMixedDouble() {
 	for _, m := range e.mixedArr {
 		srcRelative := m.GetRelativePath()
 		srcFull := m.GetFullPath()
-		tarRelative := m.GenRelativePath(e.tarDir)
 		tarFull := m.GenFullPath(e.tarDir)
 		srcFileInfo := infra.GetFileInfo(srcFull)
 		tarFileInfo := infra.GetFileInfo(tarFull)
@@ -152,9 +151,9 @@ func (e *syncExecutor) execMixedDouble() {
 				continue
 			}
 			if cr > 0 {
-				e.src2tar(srcRelative, srcFull, tarRelative, tarFull)
+				e.src2tar(srcFull, tarFull, m.GetRootSubPath())
 			} else {
-				e.tar2src(srcRelative, srcFull, tarRelative, tarFull)
+				e.tar2src(srcFull, tarFull, m.GetRootSubPath())
 			}
 			continue
 		}
@@ -165,9 +164,9 @@ func (e *syncExecutor) execMixedDouble() {
 				continue
 			}
 			if cr > 0 {
-				e.src2tar(srcRelative, srcFull, tarRelative, tarFull)
+				e.src2tar(srcFull, tarFull, m.GetRootSubPath())
 			} else {
-				e.tar2src(srcRelative, srcFull, tarRelative, tarFull)
+				e.tar2src(srcFull, tarFull, m.GetRootSubPath())
 			}
 			continue
 		}
@@ -180,7 +179,6 @@ func (e *syncExecutor) execMixedMirroring() {
 	for _, m := range e.mixedArr {
 		srcRelative := m.GetRelativePath()
 		srcFull := m.GetFullPath()
-		tarRelative := m.GenRelativePath(e.tarDir)
 		tarFull := m.GenFullPath(e.tarDir)
 		srcFileInfo := infra.GetFileInfo(srcFull)
 		tarFileInfo := infra.GetFileInfo(tarFull)
@@ -192,26 +190,24 @@ func (e *syncExecutor) execMixedMirroring() {
 			e.logger.Infoln(fmt.Sprintf("[sync] Ignored by '%s':'%s'", infra.ArgSizeUpdate, srcRelative))
 			continue
 		}
-		e.src2tar(srcRelative, srcFull, tarRelative, tarFull)
+		e.src2tar(srcFull, tarFull, m.GetRootSubPath())
 	}
 }
 
-func (e *syncExecutor) src2tar(srcRelative, srcFull string, tarRelative, tarFull string) {
-	e.logger.Infoln(fmt.Sprintf("[sync] '%s' => '%s'", srcRelative, tarRelative))
+func (e *syncExecutor) src2tar(srcFull string, tarFull string, subRelative string) {
+	e.logger.Infoln(fmt.Sprintf("[sync] => : '%s'", subRelative))
 	internal.DoCopy(srcFull, tarFull, nil)
 }
 
-func (e *syncExecutor) tar2src(srcRelative, srcFull string, tarRelative, tarFull string) {
-	e.logger.Infoln(fmt.Sprintf("[sync] '%s' <= '%s'", srcRelative, tarRelative))
+func (e *syncExecutor) tar2src(srcFull string, tarFull string, subRelative string) {
+	e.logger.Infoln(fmt.Sprintf("[sync] <= : '%s'", subRelative))
 	internal.DoCopy(tarFull, srcFull, nil)
 }
 
 func (e *syncExecutor) execSrcNew() {
 	e.logger.Infoln(fmt.Sprintf("[sync] SrcNew Len=%d", len(e.srcNewArr)))
 	for _, sn := range e.srcNewArr {
-		tarFull := sn.GenFullPath(e.tarDir)
-		e.logger.Infoln(fmt.Sprintf("[sync] '%s' => '%s'", sn.GetRelativePath(), sn.GenRelativePath(e.tarDir)))
-		internal.DoCopy(sn.GetFullPath(), tarFull, nil)
+		e.src2tar(sn.GetFullPath(), sn.GenFullPath(e.tarDir), sn.GetRootSubPath())
 	}
 }
 
@@ -219,10 +215,7 @@ func (e *syncExecutor) execTarNew() {
 	e.logger.Infoln(fmt.Sprintf("[sync] TarNew Len=%d", len(e.tarNewArr)))
 	if e.double {
 		for _, tn := range e.tarNewArr {
-			srcFull := tn.GenFullPath(e.srcDir)
-			tarFull := tn.GetFullPath()
-			e.logger.Infoln(fmt.Sprintf("[sync] '%s' <= '%s'", tn.GenRelativePath(e.srcDir), tn.GetRelativePath()))
-			internal.DoCopy(tarFull, srcFull, nil)
+			e.tar2src(tn.GenFullPath(e.srcDir), tn.GetFullPath(), tn.GetRootSubPath())
 		}
 	} else {
 		for _, tn := range e.tarNewArr {
@@ -275,7 +268,7 @@ func (e *syncExecutor) OperateSets() {
 	for idx0 < sLen && idx1 < tLen { // 找相同
 		sInfo := srcArr[idx0]
 		tInfo := tarArr[idx1]
-		//fmt.Println("C:", sInfo.GetRootSubPath(), tInfo.GetRootSubPath())
+		//fmt.Println("SubPath:", idx0, idx1, sInfo.GetRootSubPath(), tInfo.GetRootSubPath())
 		if sInfo.GetRootSubPath() == tInfo.GetRootSubPath() {
 			srcIdxArr = append(srcIdxArr, idx0)
 			tarIdxArr = append(tarIdxArr, idx1)
