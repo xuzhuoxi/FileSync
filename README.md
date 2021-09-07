@@ -304,7 +304,7 @@ targets:                        //任务数组
 xuzhuoxi 
 <xuzhuoxi@gmail.com> or <mailxuzhuoxi@163.com>
 
-[锚点测试](\a1)
+[锚点测试](#a1)
 
 ## 6. License(开源许可证)
 ~~FileSync source code is available under the MIT [License](/LICENSE).~~
