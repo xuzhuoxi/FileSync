@@ -25,7 +25,7 @@ You can modify the construction file([goxc_build.sh](/goxc_build/build.sh)) to a
 支持两类命令行行为
 1. 使用加载配置文件中的参数运行:
 	命令格式：`工具路径 -file=配置文件路径 -main=配置任务名/配置任务组名`
-	配置文件格式说明请参考：[配置文件格式](#配置文件说明)
+	配置文件格式说明请参考：[配置文件格式](#a3.2)
 	- 形式一：指定具体执行任务执行
 		例子：
 		```sh
