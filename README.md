@@ -1,13 +1,13 @@
 # FileSync
 文件同步工具
 
-## 1. Compatibility(兼容性)
+## <span id="a1">Compatibility(兼容性)</span>
 go 1.16.4
 
-## 2. Getting Started(开始)
+## Getting Started(开始)
 
-### 2.1. Download Release(下载)
-- 下载运行版本 [here](https://github.com/xuzhuoxi/FileSync/releases).
+### 2.1. Download(下载)
+- 下载运行版本 [这里](https://github.com/xuzhuoxi/FileSync/releases).
 - 下载仓库:
 	```sh
 	go get -u github.com/xuzhuoxi/FileSync
@@ -17,11 +17,10 @@ go 1.16.4
 Execution the construction file([goxc_build.sh](/goxc_build/build.sh)) to get the releases if you have already downloaded the repository.
 You can modify the construction file([goxc_build.sh](/goxc_build/build.sh)) to achieve what you want if necessary. The command line description is [here](https://github.com/laher/goxc).
 
-### 3.Run(运行)
+### 2.3. Run(运行)
+仅支持命令行运行
 
-#### Demo(例子)
-
-#### Command Line(命令行说明)
+#### 2.3.1. Command Line(命令行说明)
 支持两类命令行行为
 1. 使用加载配置文件中的参数运行:
 	命令格式：`工具路径 -file=配置文件路径 -main=配置任务名/配置任务组名`
@@ -43,11 +42,11 @@ You can modify the construction file([goxc_build.sh](/goxc_build/build.sh)) to a
 	FileSync -mode=copy -src=/data/src1/*;/data/src2 -tar=/data/tar include=*.jpg exclude=*.txt args=/Lf/Lp/r/s
 	```
 
-## Manual(用户手册)
+## 3. Manual(用户手册)
 
-### 支持模式
+### 3.1. 支持模式
 
-#### clear
+#### 3.1.1. clear
 - 功能说明：清除空目录
 - 必要参数：
 	- mode 	
@@ -67,7 +66,7 @@ You can modify the construction file([goxc_build.sh](/goxc_build/build.sh)) to a
 		- 具体执行参数说明请看[执行参数说明](#执行参数说明)
 - 忽略参数：tar
 
-#### copy
+#### 3.1.2. copy
 - 功能说明：复制文件或目录到指定目录
 - 必要参数：
 	- mode 	
@@ -101,7 +100,7 @@ You can modify the construction file([goxc_build.sh](/goxc_build/build.sh)) to a
 			- /size与/time都**启用**时，**同时**满足才会复制
 		- 具体执行参数说明请看[执行参数说明](#执行参数说明)
 
-#### delete
+#### 3.1.3. delete
 - 功能说明：删除文件或目录
 - 必要参数：
 	- mode 	
@@ -122,7 +121,7 @@ You can modify the construction file([goxc_build.sh](/goxc_build/build.sh)) to a
 		- 具体执行参数说明请看[执行参数说明](#执行参数说明)
 - 忽略参数：tar
 
-#### move
+#### 3.1.4. move
 - 功能说明：移动文件或目录到指定目录
 - 必要参数：
 	- mode 	
@@ -157,7 +156,7 @@ You can modify the construction file([goxc_build.sh](/goxc_build/build.sh)) to a
 			- **只有文件移动完成后，源目录为空才会执行目录移动**
 		- 具体执行参数说明请看[执行参数说明](#执行参数说明)
 
-#### sync
+#### 3.1.5. sync
 - 功能说明：双向同步两个目录 或 单向同步
 - 必要参数：
 	- mode 	
@@ -192,7 +191,7 @@ You can modify the construction file([goxc_build.sh](/goxc_build/build.sh)) to a
 			- 同步功能必然会**保持目录结构**
 		- 具体执行参数说明请看[执行参数说明](#执行参数说明)
 
-### 配置文件说明
+### 3.2. 配置文件说明
 使用yaml格式的配置文件,结构如下：
 ```
 main: string                    //默认，可填入 任务名 或 任务组名称
@@ -213,24 +212,24 @@ targets:                        //任务数组
 	  }
 ```
 
-### 配置文件参数说明
+### 3.3. 配置文件参数说明
 
-#### name 任务标识
+#### 3.3.1. name 任务标识
 用于区分不同任务和任务组
 
-#### mode 执行模式
+#### 3.3.2. mode 执行模式
 现支持模式有：[clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
 
-#### src
+#### 3.3.3. src
 来源路径，支持多个路径，使用";"分隔
 支持通配符路径，如”\data\\*.png“, "\*"匹配[0,n)个字符
 **注意**："\data"和"\data\"相同，指的是data目录，"\data\\*"指的是data目录下的全部文件
 
-#### tar
+#### 3.3.4. tar
 目标路径，**只支持**目录路径，**不支持**多个路径
 **注意**：[clear](#clear)、[delete](#delete)模式下忽略当前参数
 
-#### include
+#### 3.3.5. include
 格式：“file:\*.jpg,123.png;dir:folder1,fi\*er2,fi\*”，"file"部分与"dir"部分使用";"分隔
 **注意**：不配置"-include"或者"-include=空"时，**匹配全部src符合要求的文件**		
 - file部分
@@ -242,7 +241,7 @@ targets:                        //任务数组
 	支持通配符，如 "fi\*er2"、"fi\*"等，其中"\*"匹配[0,n)个字符
 	多个使用","分隔
 
-#### exclude
+#### 3.3.6. exclude
 格式：“file:\*.jpg,123.png;dir:folder1,fi\*er2,fi\*”，"file"部分与"dir"部分使用";"分隔
 **注意**：不配置"-exclude"或者"-exclude=空"时，**不排除文件**		
 - file部分
@@ -253,56 +252,59 @@ targets:                        //任务数组
 	支持具体文件名，如 "folder1"
 	支持通配符，如 "fi\*er2"、"fi\*"等，其中"\*"匹配[0,n)个字符
 	多个使用","分隔
-#### args 
+
+#### 3.3.7. args 
 - 执行参数，支持如下：**[/d](#/d)**,	**[/i](#/i)**,	**[/Lf](#/Lf)**,	**[/Lp](#/Lp)**,	**[/r](#/r)**,	**[/s](#/s)**,	**[/size](#/size)**,	**[/time](#/time)**
 - 多个参数可直接拼接，如"/d/i/Lf"
 - 具体执行参数说明请看[执行参数说明](#执行参数说明)
 
-### 执行参数说明
+### 3.4. 执行参数说明
 
-#### /d (double)
+#### 3.4.1. /d (double)
 - 说明：开启双向同步，默认为单向
 - 适用范围： [sync](#FileSync)
 
-#### /i (ignore empty)
+#### 3.4.2. /i (ignore empty)
 - 说明：忽略空目录，默认为不忽略
 - 适用范围： [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
 
-#### /Lf (log file)
+#### 3.4.3. /Lf (log file)
 - 说明：开启记录日志，默认不记录日志
 - 适用范围： [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
 
-#### /Lp (print)
+#### 3.4.4. /Lp (print)
 - 说明：控制台打印信息，默认不打印信息
 - 适用范围： [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
 
-#### /r (recurse)
+#### 3.4.5. /r (recurse)
 - 说明：递归，默认不递归
 - 适用范围： [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
 
-#### /s (stable)
+#### 3.4.6. /s (stable)
 - 说明：保持文件目录结构，默认不保持
 - 适用范围： [copy](#copy), [move](#move)
 
-#### /size (update by size)
+#### 3.4.7. /size (update by size)
 - 说明：按文件大小更新
 - 适用范围： [copy](#copy), [move](#move), [sync](#sync)
 
-#### /time (update by time)
+#### 3.4.8. /time (update by time)
 - 说明：按时间更新
 - 适用范围： [copy](#copy), [move](#move), [sync](#sync)
 
-### 命中(过滤)说明
+### 3.5. 命中(过滤)说明
 
-### 命令行说明
+### 3.6. 命令行说明
 
-## Related Library(依赖)
+## 4. Related Library(依赖)
 - infra-go [https://github.com/xuzhuoxi/infra-go](https://github.com/xuzhuoxi/infra-go)
 - goxc [https://github.com/laher/goxc](https://github.com/laher/goxc) 
 
-## Contact(联系方式)
+## 5. Contact(联系方式)
 xuzhuoxi 
 <xuzhuoxi@gmail.com> or <mailxuzhuoxi@163.com>
 
-## License(开源许可证)
+[锚点测试](\a1)
+
+## 6. License(开源许可证)
 ~~FileSync source code is available under the MIT [License](/LICENSE).~~
