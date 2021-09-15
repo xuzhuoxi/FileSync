@@ -195,12 +195,12 @@ func (e *syncExecutor) execMixedMirroring() {
 }
 
 func (e *syncExecutor) src2tar(srcFull string, tarFull string, subRelative string) {
-	e.logger.Infoln(fmt.Sprintf("[sync] => : '%s'", subRelative))
+	e.logger.Infoln(fmt.Sprintf("[sync] => '%s'", subRelative))
 	internal.DoCopy(srcFull, tarFull, nil)
 }
 
 func (e *syncExecutor) tar2src(srcFull string, tarFull string, subRelative string) {
-	e.logger.Infoln(fmt.Sprintf("[sync] <= : '%s'", subRelative))
+	e.logger.Infoln(fmt.Sprintf("[sync] <= '%s'", subRelative))
 	internal.DoCopy(tarFull, srcFull, nil)
 }
 
