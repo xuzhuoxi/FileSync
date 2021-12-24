@@ -13,41 +13,41 @@ import (
 )
 
 func main() {
-	cfgTargets, err := parseFlags()
+	cfgTasks, err := parseFlags()
 	if nil != err {
 		infra.Logger.Errorln("Line:18", err)
 		return
 	}
-	infra.Logger.Infoln(fmt.Sprintf("[main] Target number=%d", len(cfgTargets)))
+	infra.Logger.Infoln(fmt.Sprintf("[main] Task number=%d", len(cfgTasks)))
 	infra.Logger.Infoln(fmt.Sprintf("[main] RunningRelativeRoot='%s'", infra.RunningDir))
 	infra.Logger.Println()
-	execTargets(cfgTargets)
+	execTasks(cfgTasks)
 }
 
-func execTargets(cfgTargets []infra.ConfigTarget) {
-	if len(cfgTargets) == 0 {
+func execTasks(cfgTasks []infra.ConfigTask) {
+	if len(cfgTasks) == 0 {
 		return
 	}
-	for index := range cfgTargets {
-		execTarget(cfgTargets[index])
+	for index := range cfgTasks {
+		execTask(cfgTasks[index])
 	}
 }
 
-func execTarget(cfgTarget infra.ConfigTarget) {
-	err := cfgTarget.CheckTarget()
+func execTask(cfgTask infra.ConfigTask) {
+	err := cfgTask.CheckSelf()
 	if nil != err {
-		infra.Logger.Errorln(fmt.Sprintf("[main] Target=%v Err=%v", cfgTarget.Name, err))
+		infra.Logger.Errorln(fmt.Sprintf("[main] Task=%v Err=%v", cfgTask.Name, err))
 		return
 	}
-	executor := module.GetExecutor(cfgTarget.GetMode())
-	infra.Logger.Infoln(fmt.Sprintf("[main] TargetInfo=%v", cfgTarget.ToShortString()))
-	infra.Logger.Infoln(fmt.Sprintf("[main] TargetPath=%v", cfgTarget.ToPathString()))
-	executor.ExecConfigTarget(cfgTarget)
+	executor := module.GetExecutor(cfgTask.GetMode())
+	infra.Logger.Infoln(fmt.Sprintf("[main] TaskInfo=%v", cfgTask.ToShortString()))
+	infra.Logger.Infoln(fmt.Sprintf("[main] TaskPath=%v", cfgTask.ToPathString()))
+	executor.ExecConfigTask(cfgTask)
 }
 
 // 处理命令行参数
 // 得到任务配置
-func parseFlags() (targets []infra.ConfigTarget, err error) {
+func parseFlags() (tasks []infra.ConfigTask, err error) {
 	file := flag.String("file", "", "Running mode! ")
 	main := flag.String("main", "", "Main! ")
 
@@ -61,21 +61,21 @@ func parseFlags() (targets []infra.ConfigTarget, err error) {
 	flag.Parse()
 
 	if *file != "" {
-		targets, err = loadConfigTargets(*file, *main)
+		tasks, err = loadConfigTasks(*file, *main)
 	} else {
-		target := genTarget(fmt.Sprintf("Cmd.%s", *mode), *mode, *src, *tar, *include, *exclude, *args)
-		targets = []infra.ConfigTarget{target}
+		task := genTask(fmt.Sprintf("Cmd.%s", *mode), *mode, *src, *tar, *include, *exclude, *args)
+		tasks = []infra.ConfigTask{task}
 	}
 	return
 }
 
-func genTarget(name, mode, src, tar, include, exclude string, args string) (target infra.ConfigTarget) {
+func genTask(name, mode, src, tar, include, exclude string, args string) (task infra.ConfigTask) {
 	mode = strings.ToLower(mode)
-	return infra.ConfigTarget{
+	return infra.ConfigTask{
 		Name: name, Mode: mode, Src: src, Tar: tar, Include: include, Exclude: exclude, Args: args}
 }
 
-func loadConfigTargets(relativeFilePath string, main string) (targets []infra.ConfigTarget, err error) {
+func loadConfigTasks(relativeFilePath string, main string) (tasks []infra.ConfigTask, err error) {
 	cfgPath := filex.Combine(infra.RunningDir, relativeFilePath)
 	config := &infra.Config{}
 	err = loadConfigFile(cfgPath, config)
@@ -89,11 +89,11 @@ func loadConfigTargets(relativeFilePath string, main string) (targets []infra.Co
 		infra.SetRunningDir(upDir)
 	}
 	if "" == main {
-		return config.MainTargets(), nil
+		return config.MainTasks(), nil
 	}
-	targets = config.GetMainTargets(main)
-	if len(targets) == 0 {
-		err = errors.New(fmt.Sprintf("No targets with name '%s'", main))
+	tasks = config.GetMainTasks(main)
+	if len(tasks) == 0 {
+		err = errors.New(fmt.Sprintf("No tasks with name '%s'", main))
 	}
 	return
 }

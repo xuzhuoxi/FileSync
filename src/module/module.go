@@ -25,9 +25,9 @@ type IModeExecutor interface {
 	// 执行任务
 	Exec(src, tar, include, exclude, args string)
 	// 执行任务
-	ExecConfigTarget(config infra.ConfigTarget)
+	ExecConfigTask(config infra.ConfigTask)
 	// 执行任务
-	ExecRuntimeTarget(target *infra.RuntimeTarget)
+	ExecRuntimeTask(task *infra.RuntimeTask)
 }
 
 // register

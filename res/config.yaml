@@ -1,10 +1,10 @@
 main: 'all'
 groups:
   - name: 'all'
-    targets: 'clear,copy,delete,move,sync'
+    tasks: 'clear,copy,delete,move,sync'
   - name: 'some'
-    targets: 'clear,copy,sync'
-targets:
+    tasks: 'clear,copy,sync'
+tasks:
   - name: 'clear'
     mode: 'clear'
     src: 'folderPath'

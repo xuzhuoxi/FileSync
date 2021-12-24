@@ -14,37 +14,37 @@ func newDeleteExecutor() IModeExecutor {
 }
 
 type deleteExecutor struct {
-	target *infra.RuntimeTarget
-	list   internal.IPathStrList
+	task *infra.RuntimeTask
+	list internal.IPathStrList
 
 	logger  logx.ILogger
 	recurse bool // 递归，查找文件时使用
 
-	tempSrcInfo infra.SrcInfo
+	tempSrcInfo infra.SrcInfo // 运行时临时
 }
 
 func (e *deleteExecutor) Exec(src, tar, include, exclude, args string) {
-	config := infra.ConfigTarget{Name: "Delete", Mode: infra.ModeDeleteValue, Src: src,
+	config := infra.ConfigTask{Name: "Delete", Mode: infra.ModeDeleteValue, Src: src,
 		Include: include, Exclude: exclude, Args: args}
-	e.ExecConfigTarget(config)
+	e.ExecConfigTask(config)
 }
 
-func (e *deleteExecutor) ExecConfigTarget(config infra.ConfigTarget) {
-	runtimeTarget, err := infra.NewRuntimeTarget(config)
+func (e *deleteExecutor) ExecConfigTask(config infra.ConfigTask) {
+	runtimeTask, err := infra.NewRuntimeTask(config)
 	if nil != err {
 		infra.Logger.Errorln(fmt.Sprintf("[delete] Err : %v", err))
 	}
-	e.ExecRuntimeTarget(runtimeTarget)
+	e.ExecRuntimeTask(runtimeTask)
 }
 
-func (e *deleteExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
-	if nil == target {
+func (e *deleteExecutor) ExecRuntimeTask(task *infra.RuntimeTask) {
+	if nil == task {
 		return
 	}
-	if len(target.SrcArr) == 0 {
+	if len(task.SrcArr) == 0 {
 		return
 	}
-	e.target = target
+	e.task = task
 	err := e.initArgs()
 	if nil != err {
 		infra.Logger.Errorln(fmt.Sprintf("[delete] Init args error='%s'", err))
@@ -55,14 +55,14 @@ func (e *deleteExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 }
 
 func (e *deleteExecutor) initArgs() error {
-	argsMark := e.target.ArgsMark
+	argsMark := e.task.ArgsMark
 	e.logger = infra.GenLogger(argsMark)
 	e.recurse = argsMark.MatchArg(infra.MarkRecurse)
 	return nil
 }
 
 func (e *deleteExecutor) initExecuteList() {
-	for index, src := range e.target.SrcArr {
+	for index, src := range e.task.SrcArr {
 		e.tempSrcInfo = src
 
 		path := filex.Combine(infra.RunningDir, src.FormattedSrc)
@@ -97,14 +97,14 @@ func (e *deleteExecutor) fileFitting(fileInfo os.FileInfo) bool {
 		return false
 	}
 	// 名称不匹配
-	if !e.target.CheckFileFitting(filename) {
+	if !e.task.CheckFileFitting(filename) {
 		return false
 	}
 	return true
 }
 
 func (e *deleteExecutor) dirFitting(dirInfo os.FileInfo) bool {
-	if !e.target.CheckDirFitting(dirInfo.Name()) { // 过滤不匹配目录
+	if !e.task.CheckDirFitting(dirInfo.Name()) { // 过滤不匹配目录
 		return false
 	}
 	return true

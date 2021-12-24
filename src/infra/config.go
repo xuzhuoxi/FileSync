@@ -13,7 +13,7 @@ const (
 	DirSeparator         = filex.UnixSeparator
 )
 
-type ConfigTarget struct {
+type ConfigTask struct {
 	Name    string `yaml:"name"`    // 任务名称，用于唯一标识配置
 	Mode    string `yaml:"mode"`    // 任务模式，RuntimeMode相应的string值
 	Src     string `yaml:"src"`     // 任务源路径，多个用";"分隔
@@ -23,30 +23,30 @@ type ConfigTarget struct {
 	Args    string `yaml:"args"`    // 任务管理参数
 }
 
-func (ct ConfigTarget) String() string {
+func (ct ConfigTask) String() string {
 	return ct.ToFullString()
 }
 
-func (ct ConfigTarget) ToFullString() string {
-	return fmt.Sprintf("ConfigTarget[Name='%s',Mode='%s',Src='%s',Tar='%s',Include='%s',Exclude='%s',Args='%s']",
+func (ct ConfigTask) ToFullString() string {
+	return fmt.Sprintf("ConfigTask[Name='%s',Mode='%s',Src='%s',Tar='%s',Include='%s',Exclude='%s',Args='%s']",
 		ct.Name, ct.Mode, ct.Src, ct.Tar, ct.Include, ct.Exclude, ct.Args)
 }
 
-func (ct ConfigTarget) ToShortString() string {
-	return fmt.Sprintf("ConfigTarget{Name='%s',Mode='%s',Include='%s',Exclude='%s',Args='%s'}",
+func (ct ConfigTask) ToShortString() string {
+	return fmt.Sprintf("ConfigTask{Name='%s',Mode='%s',Include='%s',Exclude='%s',Args='%s'}",
 		ct.Name, ct.Mode, ct.Include, ct.Exclude, ct.Args)
 }
 
-func (ct ConfigTarget) ToPathString() string {
-	return fmt.Sprintf("ConfigTarget{Name='%s',Src='%s',Tar='%s'}",
+func (ct ConfigTask) ToPathString() string {
+	return fmt.Sprintf("ConfigTask{Name='%s',Src='%s',Tar='%s'}",
 		ct.Name, ct.Src, ct.Tar)
 }
 
-func (ct ConfigTarget) GetMode() RuntimeMode {
+func (ct ConfigTask) GetMode() RuntimeMode {
 	return GetMode(ct.Mode)
 }
 
-func (ct ConfigTarget) GetSrcArr() []SrcInfo {
+func (ct ConfigTask) GetSrcArr() []SrcInfo {
 	if ct.Src == "" {
 		return nil
 	}
@@ -61,15 +61,15 @@ func (ct ConfigTarget) GetSrcArr() []SrcInfo {
 	return rs
 }
 
-func (ct ConfigTarget) GetIncludeArr() (fws []Wildcard, dws []Wildcard, err error) {
+func (ct ConfigTask) GetIncludeArr() (fws []Wildcard, dws []Wildcard, err error) {
 	return ParseWildcards(ct.Include)
 }
 
-func (ct ConfigTarget) GetExcludeArr() (fws []Wildcard, dws []Wildcard, err error) {
+func (ct ConfigTask) GetExcludeArr() (fws []Wildcard, dws []Wildcard, err error) {
 	return ParseWildcards(ct.Exclude)
 }
 
-func (ct ConfigTarget) CheckTarget() (err error) {
+func (ct ConfigTask) CheckSelf() (err error) {
 	m, errMode := checkMode(ct.Mode)
 	if nil != errMode {
 		err = errMode
@@ -89,76 +89,76 @@ func (ct ConfigTarget) CheckTarget() (err error) {
 	return
 }
 
-func (ct ConfigTarget) GetArgsMark() ArgMark {
+func (ct ConfigTask) GetArgsMark() ArgMark {
 	return ValuesToMarks(ct.Args)
 }
 
 type ConfigGroup struct {
-	Name    string `yaml:"name"`
-	Targets string `yaml:"targets"`
+	Name  string `yaml:"name"`
+	Tasks string `yaml:"tasks"`
 }
 
 type Config struct {
-	RelativeRoot string         `yaml:"root"` // 相对路径的根目录
-	Main         string         `yaml:"main"`
-	Groups       []ConfigGroup  `yaml:"groups"`
-	Targets      []ConfigTarget `yaml:"targets"`
+	RelativeRoot string        `yaml:"root"` // 相对路径的根目录
+	Main         string        `yaml:"main"`
+	Groups       []ConfigGroup `yaml:"groups"`
+	Tasks        []ConfigTask  `yaml:"tasks"`
 }
 
 // 配置主任务列表
-func (c *Config) MainTargets() []ConfigTarget {
-	return c.GetMainTargets(c.Main)
+func (c *Config) MainTasks() []ConfigTask {
+	return c.GetMainTasks(c.Main)
 }
 
 // 取任务列表
-// main不区分Group与Target
-func (c *Config) GetMainTargets(main string) []ConfigTarget {
+// main不区分Group与Task
+func (c *Config) GetMainTasks(main string) []ConfigTask {
 	if main == "" {
 		return nil
 	}
-	if target, ok := c.GetTarget(main); ok {
-		return []ConfigTarget{target}
+	if task, ok := c.GetTask(main); ok {
+		return []ConfigTask{task}
 	}
 	if c.Groups == nil || len(c.Groups) == 0 {
 		return nil
 	}
 	for index := range c.Groups {
 		if c.Groups[index].Name == main {
-			targetNames := strings.Split(c.Groups[index].Targets, ",")
-			return c.GetTargets(targetNames)
+			taskNames := strings.Split(c.Groups[index].Tasks, ",")
+			return c.GetTasks(taskNames)
 		}
 	}
 	return nil
 }
 
 // 取任务列表
-func (c *Config) GetTargets(targetNames []string) []ConfigTarget {
-	if nil == c.Targets || len(c.Targets) == 0 {
+func (c *Config) GetTasks(taskNames []string) []ConfigTask {
+	if nil == c.Tasks || len(c.Tasks) == 0 {
 		return nil
 	}
-	if nil == targetNames || len(targetNames) == 0 {
+	if nil == taskNames || len(taskNames) == 0 {
 		return nil
 	}
-	var rs []ConfigTarget
-	for index := range targetNames {
-		if target, ok := c.GetTarget(targetNames[index]); ok {
-			rs = append(rs, target)
+	var rs []ConfigTask
+	for index := range taskNames {
+		if task, ok := c.GetTask(taskNames[index]); ok {
+			rs = append(rs, task)
 		}
 	}
 	return rs
 }
 
 // 取任务
-func (c *Config) GetTarget(targetName string) (target ConfigTarget, ok bool) {
-	if nil == c.Targets || len(c.Targets) == 0 {
-		return ConfigTarget{}, false
+func (c *Config) GetTask(taskName string) (task ConfigTask, ok bool) {
+	if nil == c.Tasks || len(c.Tasks) == 0 {
+		return ConfigTask{}, false
 	}
-	for index := range c.Targets {
-		if c.Targets[index].Name == targetName {
-			return c.Targets[index], true
+	for index := range c.Tasks {
+		if c.Tasks[index].Name == taskName {
+			return c.Tasks[index], true
 		}
 	}
-	return ConfigTarget{}, false
+	return ConfigTask{}, false
 }
 
 //-------------------------

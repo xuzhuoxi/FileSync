@@ -17,7 +17,7 @@ func newSyncExecutor() IModeExecutor {
 }
 
 type syncExecutor struct {
-	target *infra.RuntimeTarget
+	task   *infra.RuntimeTask
 	srcDir string
 	tarDir string
 
@@ -37,38 +37,38 @@ type syncExecutor struct {
 }
 
 func (e *syncExecutor) Exec(src, tar, include, exclude, args string) {
-	config := infra.ConfigTarget{Name: "Sync", Mode: infra.ModeSyncValue, Src: src,
+	config := infra.ConfigTask{Name: "Sync", Mode: infra.ModeSyncValue, Src: src,
 		Include: include, Exclude: exclude, Args: args}
-	e.ExecConfigTarget(config)
+	e.ExecConfigTask(config)
 }
 
-func (e *syncExecutor) ExecConfigTarget(config infra.ConfigTarget) {
-	runtimeTarget, err := infra.NewRuntimeTarget(config)
+func (e *syncExecutor) ExecConfigTask(config infra.ConfigTask) {
+	runtimeTask, err := infra.NewRuntimeTask(config)
 	if nil != err {
 		infra.Logger.Errorln(fmt.Sprintf("[sync] Err : %v", err))
 	}
-	e.ExecRuntimeTarget(runtimeTarget)
+	e.ExecRuntimeTask(runtimeTask)
 }
 
-func (e *syncExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
-	if nil == target {
+func (e *syncExecutor) ExecRuntimeTask(task *infra.RuntimeTask) {
+	if nil == task {
 		return
 	}
-	if len(target.SrcArr) != 1 {
+	if len(task.SrcArr) != 1 {
 		infra.Logger.Errorln(fmt.Sprintf("[sync] Src Len Err! "))
 		return
 	}
-	e.srcDir = strings.TrimSpace(target.SrcArr[0].FormattedSrc)
+	e.srcDir = strings.TrimSpace(task.SrcArr[0].FormattedSrc)
 	if e.srcDir == "" {
 		infra.Logger.Errorln(fmt.Sprintf("[sync] Src Empty Err! "))
 		return
 	}
-	e.tarDir = strings.TrimSpace(target.Tar)
+	e.tarDir = strings.TrimSpace(task.Tar)
 	if e.tarDir == "" {
 		infra.Logger.Errorln(fmt.Sprintf("[sync] Tar Empty Err! "))
 		return
 	}
-	e.target = target
+	e.task = task
 	err := e.initArgs()
 	if nil != err {
 		infra.Logger.Errorln(fmt.Sprintf("[sync] Init args error='%s'", err))
@@ -79,7 +79,7 @@ func (e *syncExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 }
 
 func (e *syncExecutor) initArgs() (err error) {
-	argsMark := e.target.ArgsMark
+	argsMark := e.task.ArgsMark
 	e.logger = infra.GenLogger(argsMark)
 	e.double = argsMark.MatchArg(infra.MarkDouble)
 	e.ignore = argsMark.MatchArg(infra.MarkIgnoreEmpty)
@@ -107,14 +107,14 @@ func (e *syncExecutor) initExecuteList() {
 	// 查找源
 	e.srcList.SetFitting(e.fileFitting, e.dirFitting)
 	e.srcList.InitSearcher()
-	src := e.target.SrcArr[0].FormattedSrc
+	src := e.task.SrcArr[0].FormattedSrc
 	e.srcList.Search(src, false)
 	e.srcList.SortResults()
 
 	// 查找目标
 	e.tarList.SetFitting(e.fileFitting, e.dirFitting)
 	e.tarList.InitSearcher()
-	e.tarList.Search(e.target.Tar, false)
+	e.tarList.Search(e.task.Tar, false)
 	e.tarList.SortResults()
 
 	// 源集合与目录集合的交集与差集计算
@@ -240,7 +240,7 @@ func (e *syncExecutor) fileFitting(fileInfo os.FileInfo) bool {
 		return false
 	}
 	// 名称不匹配
-	if !e.target.CheckFileFitting(fileInfo.Name()) {
+	if !e.task.CheckFileFitting(fileInfo.Name()) {
 		return false
 	}
 	return true
@@ -250,7 +250,7 @@ func (e *syncExecutor) dirFitting(dirInfo os.FileInfo) bool {
 	if nil == dirInfo {
 		return false
 	}
-	if !e.target.CheckDirFitting(dirInfo.Name()) {
+	if !e.task.CheckDirFitting(dirInfo.Name()) {
 		return false
 	}
 	return true

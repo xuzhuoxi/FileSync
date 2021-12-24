@@ -14,8 +14,8 @@ func newClearExecutor() IModeExecutor {
 }
 
 type clearExecutor struct {
-	target *infra.RuntimeTarget
-	list   internal.IPathStrList
+	task *infra.RuntimeTask
+	list internal.IPathStrList
 
 	logger  logx.ILogger
 	recurse bool // 递归，查找文件时使用
@@ -24,27 +24,27 @@ type clearExecutor struct {
 }
 
 func (e *clearExecutor) Exec(src, tar, include, exclude, args string) {
-	config := infra.ConfigTarget{Name: "Clear", Mode: infra.ModeClearValue, Src: src,
+	config := infra.ConfigTask{Name: "Clear", Mode: infra.ModeClearValue, Src: src,
 		Include: include, Exclude: exclude, Args: args}
-	e.ExecConfigTarget(config)
+	e.ExecConfigTask(config)
 }
 
-func (e *clearExecutor) ExecConfigTarget(cfgTarget infra.ConfigTarget) {
-	runtimeTarget, err := infra.NewRuntimeTarget(cfgTarget)
+func (e *clearExecutor) ExecConfigTask(cfgTask infra.ConfigTask) {
+	runtimeTask, err := infra.NewRuntimeTask(cfgTask)
 	if nil != err {
 		infra.Logger.Errorln(fmt.Sprintf("[clear] Err : %v", err))
 	}
-	e.ExecRuntimeTarget(runtimeTarget)
+	e.ExecRuntimeTask(runtimeTask)
 }
 
-func (e *clearExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
-	if nil == target {
+func (e *clearExecutor) ExecRuntimeTask(task *infra.RuntimeTask) {
+	if nil == task {
 		return
 	}
-	if len(target.SrcArr) == 0 {
+	if len(task.SrcArr) == 0 {
 		return
 	}
-	e.target = target
+	e.task = task
 	err := e.initArgs()
 	if nil != err {
 		infra.Logger.Errorln(fmt.Sprintf("[clear] Init args error='%s'", err))
@@ -55,14 +55,14 @@ func (e *clearExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 }
 
 func (e *clearExecutor) initArgs() error {
-	argsMark := e.target.ArgsMark
+	argsMark := e.task.ArgsMark
 	e.logger = infra.GenLogger(argsMark)
 	e.recurse = argsMark.MatchArg(infra.MarkRecurse)
 	return nil
 }
 
 func (e *clearExecutor) initExecuteList() {
-	for index, src := range e.target.SrcArr {
+	for index, src := range e.task.SrcArr {
 		e.tempSrcInfo = src
 		path := filex.Combine(infra.RunningDir, src.FormattedSrc)
 		if !filex.IsFolder(path) {
@@ -99,7 +99,7 @@ func (e *clearExecutor) dirFitting(dirInfo os.FileInfo) bool {
 		return false
 	}
 	// 名称不匹配
-	if !e.target.CheckDirFitting(filename) {
+	if !e.task.CheckDirFitting(filename) {
 		return false
 	}
 	return true

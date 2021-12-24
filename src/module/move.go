@@ -15,7 +15,7 @@ func newMoveExecutor() IModeExecutor {
 }
 
 type moveExecutor struct {
-	target *infra.RuntimeTarget
+	task *infra.RuntimeTask
 
 	logger     logx.ILogger
 	ignore     bool // 忽略空目录，查找文件时使用
@@ -29,27 +29,27 @@ type moveExecutor struct {
 }
 
 func (e *moveExecutor) Exec(src, tar, include, exclude, args string) {
-	config := infra.ConfigTarget{Name: "Move", Mode: infra.ModeMoveValue, Src: src,
+	config := infra.ConfigTask{Name: "Move", Mode: infra.ModeMoveValue, Src: src,
 		Include: include, Exclude: exclude, Args: args}
-	e.ExecConfigTarget(config)
+	e.ExecConfigTask(config)
 }
 
-func (e *moveExecutor) ExecConfigTarget(config infra.ConfigTarget) {
-	runtimeTarget, err := infra.NewRuntimeTarget(config)
+func (e *moveExecutor) ExecConfigTask(config infra.ConfigTask) {
+	runtimeTask, err := infra.NewRuntimeTask(config)
 	if nil != err {
 		infra.Logger.Errorln(fmt.Sprintf("[move] Err : %v", err))
 	}
-	e.ExecRuntimeTarget(runtimeTarget)
+	e.ExecRuntimeTask(runtimeTask)
 }
 
-func (e *moveExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
-	if nil == target {
+func (e *moveExecutor) ExecRuntimeTask(task *infra.RuntimeTask) {
+	if nil == task {
 		return
 	}
-	if len(target.SrcArr) == 0 || target.Tar == "" || strings.TrimSpace(target.Tar) == "" {
+	if len(task.SrcArr) == 0 || task.Tar == "" || strings.TrimSpace(task.Tar) == "" {
 		return
 	}
-	e.target = target
+	e.task = task
 	err := e.initArgs()
 	if nil != err {
 		infra.Logger.Errorln(fmt.Sprintf("[move] Init args error='%s'", err))
@@ -60,7 +60,7 @@ func (e *moveExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 }
 
 func (e *moveExecutor) initArgs() error {
-	argsMark := e.target.ArgsMark
+	argsMark := e.task.ArgsMark
 	e.logger = infra.GenLogger(argsMark)
 	e.ignore = argsMark.MatchArg(infra.MarkIgnoreEmpty)
 	e.recurse = argsMark.MatchArg(infra.MarkRecurse)
@@ -75,7 +75,7 @@ func (e *moveExecutor) initArgs() error {
 func (e *moveExecutor) initExecuteList() {
 	e.searcher.SetFitting(e.fileFitting, e.dirFitting)
 	e.searcher.InitSearcher()
-	for _, src := range e.target.SrcArr {
+	for _, src := range e.task.SrcArr {
 		e.tempSrcInfo = src
 		e.searcher.Search(src.FormattedSrc, src.IncludeSelf)
 	}
@@ -95,7 +95,7 @@ func (e *moveExecutor) execList() {
 		if srcFileInfo.IsDir() {
 			continue
 		}
-		_, tarFull = internal.GetTarPaths(srcPathInfo, e.stable, e.target.Tar)
+		_, tarFull = internal.GetTarPaths(srcPathInfo, e.stable, e.task.Tar)
 		tarFileInfo := infra.GetFileInfo(tarFull)
 		if nil != tarFileInfo {
 			if e.timeUpdate && infra.CompareWithTime(srcFileInfo, tarFileInfo) <= 0 { // 忽略目标新文件
@@ -129,7 +129,7 @@ func (e *moveExecutor) execList() {
 }
 
 func (e *moveExecutor) doMoveFile(pathInfo internal.IPathInfo) {
-	tarRelative, tarFull := internal.GetTarPaths(pathInfo, e.stable, e.target.Tar)
+	tarRelative, tarFull := internal.GetTarPaths(pathInfo, e.stable, e.task.Tar)
 	e.logger.Infoln(fmt.Sprintf("[move] Move file '%s' => '%s'", pathInfo.GetRelativePath(), tarRelative))
 
 	filex.CompleteParentPath(tarFull, pathInfo.GetFileInfo().Mode())
@@ -137,7 +137,7 @@ func (e *moveExecutor) doMoveFile(pathInfo internal.IPathInfo) {
 }
 
 func (e *moveExecutor) doMoveDir(pathInfo internal.IPathInfo) {
-	tarRelative, tarFull := internal.GetTarPaths(pathInfo, e.stable, e.target.Tar)
+	tarRelative, tarFull := internal.GetTarPaths(pathInfo, e.stable, e.task.Tar)
 	e.logger.Infoln(fmt.Sprintf("[move] Move Dir '%s' => '%s'", pathInfo.GetRelativePath(), tarRelative))
 
 	fileInfo := pathInfo.GetFileInfo()
@@ -158,7 +158,7 @@ func (e *moveExecutor) fileFitting(fileInfo os.FileInfo) bool {
 		return false
 	}
 	// 名称不匹配
-	if !e.target.CheckFileFitting(fileInfo.Name()) {
+	if !e.task.CheckFileFitting(fileInfo.Name()) {
 		return false
 	}
 	return true
@@ -168,7 +168,7 @@ func (e *moveExecutor) dirFitting(dirInfo os.FileInfo) bool {
 	if nil == dirInfo {
 		return false
 	}
-	if !e.target.CheckDirFitting(dirInfo.Name()) {
+	if !e.task.CheckDirFitting(dirInfo.Name()) {
 		return false
 	}
 	return true

@@ -14,7 +14,7 @@ func newCopyExecutor() IModeExecutor {
 }
 
 type copyExecutor struct {
-	target *infra.RuntimeTarget
+	task *infra.RuntimeTask
 
 	logger     logx.ILogger
 	ignore     bool // 忽略空目录，查找文件时使用
@@ -28,27 +28,27 @@ type copyExecutor struct {
 }
 
 func (e *copyExecutor) Exec(src, tar, include, exclude, args string) {
-	config := infra.ConfigTarget{Name: "Copy", Mode: infra.ModeCopyValue, Src: src,
+	config := infra.ConfigTask{Name: "Copy", Mode: infra.ModeCopyValue, Src: src,
 		Include: include, Exclude: exclude, Args: args}
-	e.ExecConfigTarget(config)
+	e.ExecConfigTask(config)
 }
 
-func (e *copyExecutor) ExecConfigTarget(config infra.ConfigTarget) {
-	runtimeTarget, err := infra.NewRuntimeTarget(config)
+func (e *copyExecutor) ExecConfigTask(config infra.ConfigTask) {
+	runtimeTask, err := infra.NewRuntimeTask(config)
 	if nil != err {
 		infra.Logger.Errorln(fmt.Sprintf("[copy] Err : %v", err))
 	}
-	e.ExecRuntimeTarget(runtimeTarget)
+	e.ExecRuntimeTask(runtimeTask)
 }
 
-func (e *copyExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
-	if nil == target {
+func (e *copyExecutor) ExecRuntimeTask(task *infra.RuntimeTask) {
+	if nil == task {
 		return
 	}
-	if len(target.SrcArr) == 0 || target.Tar == "" || strings.TrimSpace(target.Tar) == "" {
+	if len(task.SrcArr) == 0 || task.Tar == "" || strings.TrimSpace(task.Tar) == "" {
 		return
 	}
-	e.target = target
+	e.task = task
 	err := e.initArgs()
 	if nil != err {
 		infra.Logger.Errorln(fmt.Sprintf("[copy] Init args error='%s'", err))
@@ -59,7 +59,7 @@ func (e *copyExecutor) ExecRuntimeTarget(target *infra.RuntimeTarget) {
 }
 
 func (e *copyExecutor) initArgs() error {
-	argsMark := e.target.ArgsMark
+	argsMark := e.task.ArgsMark
 	e.logger = infra.GenLogger(argsMark)
 	e.ignore = argsMark.MatchArg(infra.MarkIgnoreEmpty)
 	e.recurse = argsMark.MatchArg(infra.MarkRecurse)
@@ -74,7 +74,7 @@ func (e *copyExecutor) initArgs() error {
 func (e *copyExecutor) initExecuteList() {
 	e.searcher.SetFitting(e.fileFitting, e.dirFitting)
 	e.searcher.InitSearcher()
-	for _, src := range e.target.SrcArr {
+	for _, src := range e.task.SrcArr {
 		e.tempSrcInfo = src
 		e.searcher.Search(src.FormattedSrc, src.IncludeSelf)
 	}
@@ -86,7 +86,7 @@ func (e *copyExecutor) execList() {
 	count := 0
 	for _, srcPathInfo := range e.searcher.GetResults() {
 		srcFileInfo := srcPathInfo.GetFileInfo()
-		_, tarFull := internal.GetTarPaths(srcPathInfo, e.stable, e.target.Tar)
+		_, tarFull := internal.GetTarPaths(srcPathInfo, e.stable, e.task.Tar)
 		tarFileInfo := infra.GetFileInfo(tarFull)
 		if nil != tarFileInfo {
 			if e.timeUpdate && infra.CompareWithTime(srcFileInfo, tarFileInfo) <= 0 { // 忽略目标新文件
@@ -106,7 +106,7 @@ func (e *copyExecutor) execList() {
 }
 
 func (e *copyExecutor) doCopy(pathInfo internal.IPathInfo) {
-	tarRelative, tarFull := internal.GetTarPaths(pathInfo, e.stable, e.target.Tar)
+	tarRelative, tarFull := internal.GetTarPaths(pathInfo, e.stable, e.task.Tar)
 	e.logger.Infoln(fmt.Sprintf("[copy] Copy '%s' => '%s'", pathInfo.GetRelativePath(), tarRelative))
 	internal.DoCopy(pathInfo.GetFullPath(), tarFull, nil)
 }
@@ -119,7 +119,7 @@ func (e *copyExecutor) fileFitting(fileInfo os.FileInfo) bool {
 		return false
 	}
 	// 名称不匹配
-	if !e.target.CheckFileFitting(fileInfo.Name()) {
+	if !e.task.CheckFileFitting(fileInfo.Name()) {
 		return false
 	}
 	return true
@@ -129,7 +129,7 @@ func (e *copyExecutor) dirFitting(dirInfo os.FileInfo) bool {
 	if nil == dirInfo {
 		return false
 	}
-	if !e.target.CheckDirFitting(dirInfo.Name()) {
+	if !e.task.CheckDirFitting(dirInfo.Name()) {
 		return false
 	}
 	return true

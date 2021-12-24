@@ -1,6 +1,9 @@
 package infra
 
-import "github.com/xuzhuoxi/infra-go/filex"
+import (
+	"fmt"
+	"github.com/xuzhuoxi/infra-go/filex"
+)
 
 func NewSrcInfo(srcPath string) SrcInfo {
 	originalSrc := filex.FormatPath(srcPath)
@@ -23,25 +26,29 @@ type SrcInfo struct {
 	Wildcard     Wildcard // 文件通配符
 }
 
+func (si SrcInfo) String() string {
+	return fmt.Sprintf("SrcInfo{%s, %s, %v, %v}", si.OriginalSrc, si.FormattedSrc, si.IncludeSelf, si.Wildcard)
+}
+
 func (si SrcInfo) CheckFitting(filename string) bool {
 	return "" == si.Wildcard || si.Wildcard.Match(filename)
 }
 
-func NewRuntimeTarget(target ConfigTarget) (runtimeTarget *RuntimeTarget, err error) {
-	mode := target.GetMode()
-	srcArr := target.GetSrcArr()
-	tar := target.Tar
-	fileIncludes, dirIncludes, iErr := target.GetIncludeArr()
+func NewRuntimeTask(task ConfigTask) (runtimeTask *RuntimeTask, err error) {
+	mode := task.GetMode()
+	srcArr := task.GetSrcArr()
+	tar := task.Tar
+	fileIncludes, dirIncludes, iErr := task.GetIncludeArr()
 	if nil != iErr {
 		return nil, iErr
 	}
-	fileExcludes, dirExcludes, eErr := target.GetExcludeArr()
+	fileExcludes, dirExcludes, eErr := task.GetExcludeArr()
 	if nil != eErr {
 		return nil, eErr
 	}
-	argMarks := target.GetArgsMark()
-	return &RuntimeTarget{
-		Name:         target.Name,
+	argMarks := task.GetArgsMark()
+	return &RuntimeTask{
+		Name:         task.Name,
 		Mode:         mode,
 		SrcArr:       srcArr,
 		Tar:          tar,
@@ -53,7 +60,7 @@ func NewRuntimeTarget(target ConfigTarget) (runtimeTarget *RuntimeTarget, err er
 	}, nil
 }
 
-type RuntimeTarget struct {
+type RuntimeTask struct {
 	RelativeRoot string      // 相对路径的根目录
 	Name         string      // 任务名称，用于唯一标识配置
 	Mode         RuntimeMode // 任务模式，RuntimeMode
@@ -66,34 +73,34 @@ type RuntimeTarget struct {
 	ArgsMark     ArgMark     // 任务管理参数
 }
 
-func (t *RuntimeTarget) CheckFileFitting(filename string) bool {
+func (t *RuntimeTask) CheckFileFitting(filename string) bool {
 	return t.checkFitting(filename, t.FileIncludes, t.FileExcludes)
 }
 
-func (t *RuntimeTarget) CheckDirFitting(filename string) bool {
+func (t *RuntimeTask) CheckDirFitting(filename string) bool {
 	return t.checkFitting(filename, t.DirIncludes, t.DirExcludes)
 }
 
-func (t *RuntimeTarget) MatchArg(param ArgMark) bool {
+func (t *RuntimeTask) MatchArg(param ArgMark) bool {
 	return t.ArgsMark.MatchArg(param)
 }
 
-func (t *RuntimeTarget) checkFitting(filename string, includes []Wildcard, excludes []Wildcard) bool {
+func (t *RuntimeTask) checkFitting(filename string, includes []Wildcard, excludes []Wildcard) bool {
 	iLen := len(includes)
 	eLen := len(excludes)
-	if eLen == 0 && iLen == 0 {
+	if eLen == 0 && iLen == 0 { // 没有include和exclude配置
 		return true
 	}
-	if eLen > 0 && t.checkInWildcard(excludes, filename) {
+	if eLen > 0 && t.checkInWildcard(excludes, filename) { //有exclude配置
 		return false
 	}
-	if iLen > 0 && !t.checkInWildcard(includes, filename) {
+	if iLen > 0 && !t.checkInWildcard(includes, filename) { //有include配置
 		return false
 	}
 	return true
 }
 
-func (t *RuntimeTarget) checkInWildcard(wildcards []Wildcard, value string) bool {
+func (t *RuntimeTask) checkInWildcard(wildcards []Wildcard, value string) bool {
 	for index := range wildcards {
 		if wildcards[index].Match(value) {
 			return true
