@@ -199,9 +199,9 @@ main: string                    //默认，可填入 任务名 或 任务组名�
 groups:                         //任务组数组
 	- {
 		name:       string      //任务组名称，用于区分每个任务或任务组
-		targets:    string      //目标任务列表，各个任务间使用英文逗号“,”分隔
+		tasks:    string      //目标任务列表，各个任务间使用英文逗号“,”分隔
 	  }
-targets:                        //任务数组
+tasks:                        //任务数组
 	- {
 		name:       string      //任务名称：	用于区分每个任务或任务组
 		mode:       string      //任务模式：	用于区分任务真实的执行行为
