@@ -6,6 +6,7 @@ import (
 	"github.com/xuzhuoxi/FileSync/src/module/internal"
 	"github.com/xuzhuoxi/infra-go/filex"
 	"github.com/xuzhuoxi/infra-go/logx"
+	"github.com/xuzhuoxi/infra-go/slicex"
 	"os"
 )
 
@@ -58,6 +59,7 @@ func (e *clearExecutor) initArgs() error {
 	argsMark := e.task.ArgsMark
 	e.logger = infra.GenLogger(argsMark)
 	e.recurse = argsMark.MatchArg(infra.MarkRecurse)
+	fmt.Println("initArgs", e.recurse)
 	return nil
 }
 
@@ -75,16 +77,19 @@ func (e *clearExecutor) initExecuteList() {
 			e.checkSubDir(path)
 		}
 	}
-	e.list.Sort()
 }
 
 func (e *clearExecutor) execList() {
 	if e.list.Len() == 0 {
 		return
 	}
-	for _, dir := range e.list.GetAll() {
-		e.logger.Infoln(fmt.Sprintf("[clear] Clear Folder='%s'", dir))
-		os.RemoveAll(dir)
+	all := e.list.GetAll()
+	slicex.ReverseString(all)
+	for _, dir := range all {
+		if e.isDirEmpty(dir) {
+			e.logger.Infoln(fmt.Sprintf("[clear] Clear Folder='%s'", dir))
+			os.Remove(dir)
+		}
 	}
 }
 
@@ -105,17 +110,6 @@ func (e *clearExecutor) dirFitting(dirInfo os.FileInfo) bool {
 	return true
 }
 
-func (e *clearExecutor) checkPath(fullPath string) {
-	isFile := e.checkDir(fullPath)
-	if isFile {
-		return
-	}
-	if !e.recurse {
-		return
-	}
-	e.checkSubDir(fullPath)
-}
-
 func (e *clearExecutor) checkSubDir(fullDir string) {
 	dirPaths, _ := filex.GetPathsInDir(fullDir, func(subPath string, info os.FileInfo) bool {
 		return info.IsDir()
@@ -124,34 +118,35 @@ func (e *clearExecutor) checkSubDir(fullDir string) {
 		return
 	}
 	for _, dir := range dirPaths {
-		e.checkPath(dir)
+		e.checkDir(dir)
 	}
 }
 
-func (e *clearExecutor) checkDir(fullDir string) (Interrupt bool) {
+func (e *clearExecutor) checkDir(fullDir string) {
 	fileInfo, err := os.Stat(fullDir)
 	if err != nil && !os.IsExist(err) { //不存在
-		return true
+		return
 	}
-	if !fileInfo.IsDir() {
-		return true
+	if !fileInfo.IsDir() { //文件
+		return
 	}
-	if !e.dirFitting(fileInfo) {
-		return false
+	fit := e.dirFitting(fileInfo)
+	if fit {
+		e.appendDir(fullDir)
 	}
-	if e.recurse {
-		size, _ := filex.GetFolderSize(fullDir)
-		// 非空
-		if 0 != size {
-			return false
-		}
-	} else {
-		dirPaths, _ := filex.GetPathsInDir(fullDir, nil)
-		// 非空
-		if len(dirPaths) != 0 {
-			return false
-		}
-	}
+	e.checkSubDir(fullDir)
+}
+
+func (e *clearExecutor) isDirEmpty(fullDir string) bool {
+	dirPaths, _ := filex.GetPathsInDir(fullDir, nil)
+	return 0 == len(dirPaths)
+}
+
+func (e *clearExecutor) isDirDepthEmpty(fullDir string) bool {
+	size, _ := filex.GetFolderSize(fullDir)
+	return size <= 0
+}
+
+func (e *clearExecutor) appendDir(fullDir string) {
 	e.list.Append(fullDir)
-	return true
 }
