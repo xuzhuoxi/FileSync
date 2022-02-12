@@ -3,7 +3,7 @@ package internal
 import (
 	"github.com/xuzhuoxi/FileSync/src/infra"
 	"github.com/xuzhuoxi/infra-go/filex"
-	"io/fs"
+	"os"
 	"sort"
 )
 
@@ -13,7 +13,7 @@ type IPathInfo interface {
 	// 基于RelativeRoot的相对路径
 	GetRootSubPath() string
 	// 文件或目录信息
-	GetFileInfo() fs.FileInfo
+	GetFileInfo() os.FileInfo
 
 	// 完整相对路径
 	GetRelativePath() string
@@ -32,7 +32,7 @@ type IPathInfo interface {
 type pathInfo struct {
 	RelativeRoot string      // 基于(运行目录/配置文件目录) 的相对路径
 	RootSubPath  string      // 基于RelativeRoot的相对路径
-	FileInfo     fs.FileInfo // 文件或目录信息
+	FileInfo     os.FileInfo // 文件或目录信息
 
 	relativePath string // 临时补全的完整相对路径,基于(运行目录/配置文件目录)
 	fullPath     string // 临时补全的完整绝对路径
@@ -46,7 +46,7 @@ func (i *pathInfo) GetRootSubPath() string {
 	return i.RootSubPath
 }
 
-func (i *pathInfo) GetFileInfo() fs.FileInfo {
+func (i *pathInfo) GetFileInfo() os.FileInfo {
 	return i.FileInfo
 }
 

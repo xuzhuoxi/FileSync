@@ -63,7 +63,8 @@ func (e *pathSearcher) Search(relativeRoot string, checkRoot bool) {
 		return
 	}
 	if !fileInfo.IsDir() { // 文件
-		e.checkFile(relativeRoot, "", fileInfo)
+		fn := fileInfo.Name()
+		e.checkFile(relativeRoot[0:len(relativeRoot)-len(fn)], fn, fileInfo)
 		return
 	}
 	// 目录

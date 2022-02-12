@@ -10,7 +10,7 @@ package module
 //type detailPath struct {
 //	Index    int
 //	SrcInfo  infra.SrcInfo // Src信息
-//	FileInfo fs.FileInfo
+//	FileInfo os.FileInfo
 //
 //	SrcRelativePath string // 运行时 源 相对路径
 //	TarRelativePath string // 运行时 目录 相对路径
