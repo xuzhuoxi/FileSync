@@ -8,7 +8,7 @@ import (
 	"github.com/xuzhuoxi/FileSync/src/module"
 	"github.com/xuzhuoxi/infra-go/filex"
 	"gopkg.in/yaml.v2"
-	"os"
+	"io/ioutil"
 	"strings"
 )
 
@@ -99,7 +99,7 @@ func loadConfigTasks(relativeFilePath string, main string) (tasks []infra.Config
 }
 
 func loadConfigFile(configPath string, dataRef interface{}) error {
-	bs, err := os.ReadFile(configPath)
+	bs, err := ioutil.ReadFile(configPath)
 	if nil != err {
 		return err
 	}
