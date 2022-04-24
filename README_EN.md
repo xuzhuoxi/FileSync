@@ -1,48 +1,48 @@
 # FileSync
 
-文件同步工具
+File synchronization tool.
 
-可用于固定或有规律的文件复制、删除、移动功能，以及文件夹单向或双向同步。
+Can be used for fixed or regular file copy, delete, move functions, and one-way or two-way synchronization of folders.
 
-中文 | [English](/README_EN.md)
+[中文](README_EN.md) | English
 
-## <span id="a1">兼容性</span>
+## <span id="a1">Compatibility</span>
 
 go1.16.15
 
-## <span id="a2">开始</span>
+## <span id="a2">Getting Started</span>
 
-### <span id="a2.1">1. 下载</span>
+### <span id="a2.1">1. Download</span>
 
-- 下载发行版本 [这里](https://github.com/xuzhuoxi/FileSync/releases).
+- Download the release. [hear](https://github.com/xuzhuoxi/FileSync/releases).
 
-- 下载仓库:
+- Download the repository:
 
   ```sh
   go get -u github.com/xuzhuoxi/FileSync
   ```
 
-### <span id="a2.2">2. 构建<span>
+### <span id="a2.2">2. Build<span>
 
-- 如果你已经下载整个仓库及相关依赖仓库，你可以执行([goxc_build.sh](/goxc_build/build.sh))进行构建来获得执行程序。
+- Execution the construction file([goxc_build.sh](/goxc_build/build.sh)) to get the releases if you have already downloaded the repository.
 
-- 如有必要，你可以修改 ([goxc_build.sh](/goxc_build/build.sh))来进行自定义的构造，构造工具的说明在[这里](https://github.com/laher/goxc).
+- You can modify the construction file([goxc_build.sh](/goxc_build/build.sh)) to achieve what you want if necessary. The command line description is [here](https://github.com/laher/goxc).
 
-### <span id="a2.3">3. 运行<span>
+### <span id="a2.3">3. Run<span>
 
-- 仅支持命令行运行
+- Only supports command line operation.
 
-- [例子](/demo)
+- [Demo](/demo)
 
-#### <span id="a2.3.1">3.1 命令行说明<span>
+#### <span id="a2.3.1">3.1 Command Line<span>
 
-支持两类命令行行为
+Two types of command line behavior are supported.
 
-- 使用加载配置文件中的参数运行:
+- Run with the parameters in the load configuration file
 
-  命令格式：`执行文件路径 -file=配置文件路径 -main=配置任务名/配置任务组名`
+  Command format：`工具路径 -file=配置文件路径 -main=配置任务名/配置任务组名`
 
-  配置文件格式说明请参考：[配置文件格式](#a3.2)
+  Please refer to the configuration file format description：[配置文件格式](#a3.2)
 
 	- 指定具体执行任务执行, 如：
 
@@ -56,7 +56,7 @@ go1.16.15
 	FileSync -file=demo.yaml
 	```
 
-- 直接在命令行设置参数运行
+- Set parameters directly on the command line to run
 
 	命令格式：`工具路径 -mode=执行模式 -src=来源信息 -tar=目录信息 -include=选择处理设置 -exclude=排除处理设置 -args=执行参数`
 
@@ -66,9 +66,9 @@ go1.16.15
 	FileSync -mode=copy -src=/data/src1/*;/data/src2 -tar=/data/tar include=*.jpg exclude=*.txt args=/Lf/Lp/r/s
 	```
 
-## <span id="a3">用户手册<span>
+## <span id="a3">Manual<span>
 
-### <span id="a3.1">1. 支持模式<span>
+### <span id="a3.1">1. Supported Mode<span>
 
 #### <span id="clear">1.1. clear<span>
 
@@ -258,7 +258,7 @@ go1.16.15
 			- 同步功能必然会**保持目录结构**
 		- 具体执行参数说明请看[执行参数说明](#a3.4)
 
-### <span id="a3.2">2. 配置文件说明<span>
+### <span id="a3.2">2. Configuration File Description<span>
 
 使用yaml格式的配置文件,结构如下：
 
@@ -281,28 +281,28 @@ tasks:                        //任务数组
 	  }
 ```
 
-###  <span id="a3.3">3. 配置文件参数说明<span>
+###  <span id="a3.3">3. Configuration File Parameter Description<span>
 
-#### <span id="name">3.1. name (任务标识)<span>
+#### <span id="name">3.1. name (Task ID)<span>
 
 - 用于区分不同任务和任务组
 
-#### <span id="mode">3.2. mode (执行模式)<span>
+#### <span id="mode">3.2. mode (Execution Mode)<span>
 
 - 现支持模式有：[clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
 
-#### <span id="src">3.3. src (来源路径)<span>
+#### <span id="src">3.3. src (Source Paths)<span>
 
 - 来源路径，支持多个路径，使用";"分隔
 - 支持通配符路径，如”\data\\*.png“, "\*"匹配[0,n)个字符
 - **注意**："\data"和"\data\"相同，指的是data目录，"\data\\*"指的是data目录下的全部文件
 
-#### <span id="tar">3.4. tar (目标路径)<span>
+#### <span id="tar">3.4. tar (Target Path)<span>
 
 - 目标路径，**只支持**目录路径，**不支持**多个路径
 - **注意**：[clear](#clear)、[delete](#delete)模式下忽略当前参数
 
-#### <span id="include">3.5. include (包含配置)<span>
+#### <span id="include">3.5. include (Included Configs)<span>
 
 - 格式：“file:\*.jpg,123.png;dir:folder1,fi\*er2,fi\*”，"file"部分与"dir"部分使用";"分隔
 - **注意**：不配置"-include"或者"-include=空"时，**匹配全部src符合要求的文件**		
@@ -315,7 +315,7 @@ tasks:                        //任务数组
 	支持通配符，如 "fi\*er2"、"fi\*"等，其中"\*"匹配[0,n)个字符
 	多个使用","分隔
 
-#### <span id="exclude">3.6. exclude (排除配置)<span>
+#### <span id="exclude">3.6. exclude (Excluded Configs)<span>
 
 - 格式：“file:\*.jpg,123.png;dir:folder1,fi\*er2,fi\*”，"file"部分与"dir"部分使用";"分隔
 - **注意**：不配置"-exclude"或者"-exclude=空"时，**不排除文件**		
@@ -328,55 +328,55 @@ tasks:                        //任务数组
 	支持通配符，如 "fi\*er2"、"fi\*"等，其中"\*"匹配[0,n)个字符
 	多个使用","分隔
 
-#### <span id="args">3.7. args (执行参数)<span>
+#### <span id="args">3.7. args (Exec Parameters)<span>
 
 - 执行参数，支持如下：**[/d](#/d)**,	**[/i](#/i)**,	**[/Lf](#/Lf)**,	**[/Lp](#/Lp)**,	**[/r](#/r)**,	**[/s](#/s)**,	**[/size](#/size)**,	**[/time](#/time)**
 - 多个参数可直接拼接，如"/d/i/Lf"
 - 具体执行参数说明请看[执行参数说明](#a3.4)
 
-### <span id="a3.4">4. 执行参数说明<span>
+### <span id="a3.4">4. Exec Parameters Description<span>
 
-#### <span id="d">4.1. /d (双向同步)<span>
+#### <span id="d">4.1. /d (double)<span>
 
 - 说明：开启双向同步，默认为单向
 - 适用范围： [sync](#FileSync)
 
-#### <span id="i">4.2. /i (忽略空目录)<span>
+#### <span id="i">4.2. /i (ignore empty)<span>
 
 - 说明：忽略空目录，默认为不忽略
 - 适用范围： [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
 
-#### <span id="Lf">4.3. /Lf (开启文件日志)<span>
+#### <span id="Lf">4.3. /Lf (enable log file)<span>
 
 - 说明：开启记录日志，默认不记录日志
 - 适用范围： [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
 
-#### <span id="Lp">4.4. /Lp (开启打印)<span>
+#### <span id="Lp">4.4. /Lp (enable print)<span>
 
 - 说明：控制台打印信息，默认不打印信息
 - 适用范围： [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
 
-#### <span id="r">4.5. /r (开启递归)<span>
+#### <span id="r">4.5. /r (enable recurse)<span>
 
 - 说明：递归，默认不递归
 - 适用范围： [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
 
-#### <span id="s">4.6. /s (保持目录结构)<span>
+#### <span id="s">4.6. /s (keep structure stable)<span>
 
 - 说明：保持文件目录结构，默认不保持
 - 适用范围： [copy](#copy), [move](#move)
 
-#### <span id="size">4.7. /size (根据文件大小差别进行更新)<span>
+#### <span id="size">4.7. /size (update by size)<span>
 
 - 说明：按文件大小更新
 - 适用范围： [copy](#copy), [move](#move), [sync](#sync)
 
-#### <span id="time">4.8. /time (根据文件修改时间差别进行更新)<span>
+#### <span id="time">4.8. /time (update by time)<span>
 
 - 说明：按时间更新
 - 适用范围： [copy](#copy), [move](#move), [sync](#sync)
 
-### <span id="a3.5">5. 命中(过滤)说明<span>
+### <span id="a3.5">5. Wildcard Filter(include、exclude、src) Description<span>
 
 以下为文件的命中判断的**常规逻辑**
 1. [src](#src)中的通配符
