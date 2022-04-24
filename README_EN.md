@@ -40,17 +40,17 @@ Two types of command line behavior are supported.
 
 - Run with the parameters in the load configuration file
 
-  Command format：`工具路径 -file=配置文件路径 -main=配置任务名/配置任务组名`
+  Command format：`"Executable file path" -file="config file path" -main=task name/task group name`
 
-  Please refer to the configuration file format description：[配置文件格式](#a3.2)
+  Please refer to the configuration file format description：[Configuration file Description](#a3.2)
 
-	- 指定具体执行任务执行, 如：
+	- Specify specific tasks to be executed, E.g：
 
 	```sh
 	FileSync -file=demo.yaml -main=copy
 	```
 
-	- 不指定具体执行任务，执行配置文件中默认任务，如：
+	- Execute the default task in the configuration file，E.g：
 	
 	```sh
 	FileSync -file=demo.yaml
@@ -58,13 +58,13 @@ Two types of command line behavior are supported.
 
 - Set parameters directly on the command line to run
 
-	命令格式：`工具路径 -mode=执行模式 -src=来源信息 -tar=目录信息 -include=选择处理设置 -exclude=排除处理设置 -args=执行参数`
+  Command format：`"Executable file path" -mode="Execution mode" -src="Sources Path" -tar="Target Path" -include="include parameters" -exclude="exclude parameters" -args="Exec Parameters"`
 
-	例如：
+  E.g：
 	
-	```sh
-	FileSync -mode=copy -src=/data/src1/*;/data/src2 -tar=/data/tar include=*.jpg exclude=*.txt args=/Lf/Lp/r/s
-	```
+  ```sh
+  FileSync -mode=copy -src=/data/src1/*;/data/src2 -tar=/data/tar include=*.jpg exclude=*.txt args=/Lf/Lp/r/s
+  ```
 
 ## <span id="a3">Manual<span>
 
@@ -72,19 +72,19 @@ Two types of command line behavior are supported.
 
 #### <span id="clear">1.1. clear<span>
 
-- 功能说明
+- Features Description
 
-  清除空目录
+  Clear empty directories.
 
-- 必要参数
+- Required parameters
 
 	- mode 	
 	  mode=clear
 	- src
-	  只针对目录处理
+	  For directory only.
 
 
-- 可选参数
+- Optional parameter
 
 	- include
 	  只支持dir部分，忽略file部分
