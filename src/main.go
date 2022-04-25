@@ -15,12 +15,13 @@ import (
 func main() {
 	cfgTasks, err := parseFlags()
 	if nil != err {
-		infra.Logger.Errorln("Line:18", err)
+		infra.Logger.Errorln("Flags Error(Line:18):", err)
 		return
 	}
+	infra.Logger.Println()
+	infra.Logger.Println("********************新命令分割线********************")
 	infra.Logger.Infoln(fmt.Sprintf("[main] Task number=%d", len(cfgTasks)))
 	infra.Logger.Infoln(fmt.Sprintf("[main] RunningRelativeRoot='%s'", infra.RunningDir))
-	infra.Logger.Println()
 	execTasks(cfgTasks)
 }
 
@@ -40,6 +41,7 @@ func execTask(cfgTask infra.ConfigTask) {
 		return
 	}
 	executor := module.GetExecutor(cfgTask.GetMode())
+	infra.Logger.Println(fmt.Sprintf("--------------------任务(%s)--------------------", cfgTask.Name))
 	infra.Logger.Infoln(fmt.Sprintf("[main] TaskInfo=%v", cfgTask.ToShortString()))
 	infra.Logger.Infoln(fmt.Sprintf("[main] TaskPath=%v", cfgTask.ToPathString()))
 	executor.ExecConfigTask(cfgTask)
@@ -89,9 +91,10 @@ func loadConfigTasks(relativeFilePath string, main string) (tasks []infra.Config
 		infra.SetRunningDir(upDir)
 	}
 	if "" == main {
-		return config.MainTasks(), nil
+		tasks = config.MainTasks()
+	} else {
+		tasks = config.GetMainTasks(main)
 	}
-	tasks = config.GetMainTasks(main)
 	if len(tasks) == 0 {
 		err = errors.New(fmt.Sprintf("No tasks with name '%s'", main))
 	}

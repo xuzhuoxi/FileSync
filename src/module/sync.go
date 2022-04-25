@@ -107,7 +107,7 @@ func (e *syncExecutor) initExecuteList() {
 	// 查找源
 	e.srcList.SetFitting(e.fileFitting, e.dirFitting)
 	e.srcList.InitSearcher()
-	src := e.task.SrcArr[0].FormattedSrc
+	src := e.task.SrcArr[0].FormattedSrc // 同步时，源目录有且只有一个目录
 	e.srcList.Search(src, false)
 	e.srcList.SortResults()
 
@@ -122,13 +122,14 @@ func (e *syncExecutor) initExecuteList() {
 }
 
 func (e *syncExecutor) execList() {
+	e.logger.Infoln(fmt.Sprintf("[sync] SrcNew(Len=%d),TarNew(Len=%d),Mixed(Len=%d)", len(e.srcNewArr), len(e.tarNewArr), len(e.mixedArr)))
 	e.execMixedList()
 	e.execSrcNew()
 	e.execTarNew()
 }
 
 func (e *syncExecutor) execMixedList() {
-	e.logger.Infoln(fmt.Sprintf("[sync] Mixed Len=%d", len(e.mixedArr)))
+	e.logger.Infoln(fmt.Sprintf("[sync] Mixed(Len=%d) Src=>Tar", len(e.mixedArr)))
 	if e.double {
 		e.execMixedDouble()
 	} else {
@@ -205,21 +206,21 @@ func (e *syncExecutor) tar2src(srcFull string, tarFull string, subRelative strin
 }
 
 func (e *syncExecutor) execSrcNew() {
-	e.logger.Infoln(fmt.Sprintf("[sync] SrcNew Len=%d", len(e.srcNewArr)))
+	e.logger.Infoln(fmt.Sprintf("[sync] SrcNew(Len=%d) Src=>Tar", len(e.srcNewArr)))
 	for _, sn := range e.srcNewArr {
 		e.src2tar(sn.GetFullPath(), sn.GenFullPath(e.tarDir), sn.GetRootSubPath())
 	}
 }
 
 func (e *syncExecutor) execTarNew() {
-	e.logger.Infoln(fmt.Sprintf("[sync] TarNew Len=%d", len(e.tarNewArr)))
 	if e.double {
+		e.logger.Infoln(fmt.Sprintf("[sync] TarNew(Len=%d) Src<=Tar", len(e.tarNewArr)))
 		for _, tn := range e.tarNewArr {
 			e.tar2src(tn.GenFullPath(e.srcDir), tn.GetFullPath(), tn.GetRootSubPath())
 		}
 	} else {
 		for _, tn := range e.tarNewArr {
-			e.logger.Infoln(fmt.Sprintf("[sync] delete '%s'", tn.GetRelativePath()))
+			e.logger.Infoln(fmt.Sprintf("[sync] TarNew(Len=%d) Delete '%s'", len(e.tarNewArr), tn.GetRelativePath()))
 			filex.Remove(tn.GetFullPath())
 		}
 	}
@@ -262,16 +263,17 @@ func (e *syncExecutor) OperateSets() {
 
 	idx0, idx1 := 0, 0
 	sLen, tLen := len(srcArr), len(tarArr)
+	//e.logger.Debugln(fmt.Sprintf("SrcLen=%d, TarLen=%d", sLen, tLen))
 	minLen := mathx.MinInt(sLen, tLen)
-	srcIdxArr := make([]int, 0, minLen)
-	tarIdxArr := make([]int, 0, minLen)
+	mixSrcIdxArr := make([]int, 0, minLen)
+	mixTarIdxArr := make([]int, 0, minLen)
 	for idx0 < sLen && idx1 < tLen { // 找相同
 		sInfo := srcArr[idx0]
 		tInfo := tarArr[idx1]
 		//fmt.Println("SubPath:", idx0, idx1, sInfo.GetRootSubPath(), tInfo.GetRootSubPath())
 		if sInfo.GetRootSubPath() == tInfo.GetRootSubPath() {
-			srcIdxArr = append(srcIdxArr, idx0)
-			tarIdxArr = append(tarIdxArr, idx1)
+			mixSrcIdxArr = append(mixSrcIdxArr, idx0)
+			mixTarIdxArr = append(mixTarIdxArr, idx1)
 			idx0, idx1 = idx0+1, idx1+1
 			continue
 		}
@@ -281,25 +283,32 @@ func (e *syncExecutor) OperateSets() {
 			idx1 += 1
 		}
 	}
-	sameSize := len(srcIdxArr)
+	sameSize := len(mixSrcIdxArr)
 	e.mixedArr = make([]internal.IPathInfo, 0, sameSize)
 	e.srcNewArr = make([]internal.IPathInfo, 0, sLen-sameSize)
-	for idx0, idx1 = 0, 0; idx0 < sLen; {
-		if idx1 < sameSize && idx0 == srcIdxArr[idx1] { // 相同
-			e.mixedArr = append(e.mixedArr, srcArr[idx0])
-			idx0, idx1 = idx0+1, idx1+1
-			continue
+	for idx0, idx1 = 0, 0; idx0 < sLen; idx0 += 1 { //idx0记录SrcArr下标, idx1记录mixSrcIdxArr下标
+		if idx1 >= sameSize {
+			break
 		}
-		e.srcNewArr = append(e.srcNewArr, srcArr[idx0])
-		idx0 += 1
+		if idx0 == mixSrcIdxArr[idx1] { // 相同
+			e.mixedArr = append(e.mixedArr, srcArr[idx0])
+			//e.logger.Debugln(fmt.Sprintf("MixedPath:%s", srcArr[idx0].GetFullPath()))
+			idx1 = idx1 + 1
+		} else {
+			e.srcNewArr = append(e.srcNewArr, srcArr[idx0])
+			//e.logger.Debugln(fmt.Sprintf("SrcPath:%s", srcArr[idx0].GetFullPath()))
+		}
 	}
 	e.tarNewArr = make([]internal.IPathInfo, 0, tLen-sameSize)
-	for idx0, idx1 = 0, 0; idx0 < tLen; {
-		if idx1 < sameSize && idx0 == srcIdxArr[idx1] { // 相同
-			idx0, idx1 = idx0+1, idx1+1
-			continue
+	for idx0, idx1 = 0, 0; idx0 < tLen; idx0 += 1 { //idx0记录TarArr下标, idx1记录mixTarIdxArr下标
+		if idx1 >= sameSize {
+			break
 		}
-		e.tarNewArr = append(e.tarNewArr, tarArr[idx0])
-		idx0 += 1
+		if idx0 == mixTarIdxArr[idx1] { // 相同
+			idx1 = idx1 + 1
+		} else {
+			e.tarNewArr = append(e.tarNewArr, tarArr[idx0])
+			//e.logger.Debugln(fmt.Sprintf("TarPath:%s", tarArr[idx0].GetFullPath()))
+		}
 	}
 }
