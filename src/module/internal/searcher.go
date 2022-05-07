@@ -59,7 +59,7 @@ func (e *pathSearcher) Search(relativeRoot string, checkRoot bool) {
 	fullSrcRoot := filex.Combine(infra.RunningDir, relativeRoot)
 	fileInfo, err := os.Stat(fullSrcRoot)
 	if err != nil && !os.IsExist(err) { //不存在
-		e.logger.Warnln(fmt.Sprintf("[search] Ignore src[%s]", relativeRoot))
+		e.logger.Warnln(fmt.Sprintf("[search] Ignore Serach Path[%s][%s]", relativeRoot, fullSrcRoot))
 		return
 	}
 	if !fileInfo.IsDir() { // 文件
@@ -79,7 +79,7 @@ func (e *pathSearcher) Search(relativeRoot string, checkRoot bool) {
 func (e *pathSearcher) SortResults() {
 	e.resultList.Sort()
 	//for _, info := range e.resultList.GetAll() {
-	//	fmt.Println("列表：", info.GetRelativePath())
+	//	e.logger.Debugln("列表：", info.GetRelativePath())
 	//}
 }
 
