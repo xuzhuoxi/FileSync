@@ -77,8 +77,11 @@ func genTask(name, mode, src, tar, include, exclude string, args string) (task i
 		Name: name, Mode: mode, Src: src, Tar: tar, Include: include, Exclude: exclude, Args: args}
 }
 
-func loadConfigTasks(relativeFilePath string, main string) (tasks []infra.ConfigTask, err error) {
-	cfgPath := filex.Combine(infra.RunningDir, relativeFilePath)
+func loadConfigTasks(filePath string, main string) (tasks []infra.ConfigTask, err error) {
+	cfgPath := filePath
+	if !filex.IsFile(filePath) {
+		cfgPath = filex.Combine(infra.RunningDir, filePath)
+	}
 	config := &infra.Config{}
 	err = loadConfigFile(cfgPath, config)
 	if nil != err {
