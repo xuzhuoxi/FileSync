@@ -1,7 +1,6 @@
 package infra
 
 import (
-	"fmt"
 	"github.com/xuzhuoxi/infra-go/cryptox"
 	"os"
 )
@@ -42,6 +41,6 @@ func CompareWithSize(srcInfo, tarInfo os.FileInfo) int64 {
 func CompareWithMd5(srcPath, tarPath string) bool {
 	md5Src := cryptox.Md5File(srcPath)
 	md5Tar := cryptox.Md5File(tarPath)
-	fmt.Println(srcPath, md5Src, "|", tarPath, md5Tar, "|", md5Src == md5Tar)
+	//fmt.Println(srcPath, md5Src, "|", tarPath, md5Tar, "|", md5Src == md5Tar)
 	return md5Src == md5Tar
 }
