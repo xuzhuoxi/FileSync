@@ -27,6 +27,7 @@ type syncExecutor struct {
 	recurse    bool // 保持目录结构，处理文件时使用
 	timeUpdate bool // 只处理新时间文件，处理文件时使用
 	sizeUpdate bool // 只处理size更大文件，处理文件时使用
+	md5Update  bool //只处理md5不一样的文件，处理文件时使用
 
 	srcList internal.IPathSearcher
 	tarList internal.IPathSearcher
@@ -86,16 +87,25 @@ func (e *syncExecutor) initArgs() (err error) {
 	e.recurse = argsMark.MatchArg(infra.MarkRecurse)
 	e.timeUpdate = argsMark.MatchArg(infra.MarkTimeUpdate)
 	e.sizeUpdate = argsMark.MatchArg(infra.MarkSizeUpdate)
+	e.md5Update = argsMark.MatchArg(infra.MarkMd5Update)
 
-	if e.double && e.timeUpdate && e.sizeUpdate {
-		err = errors.New(fmt.Sprintf("[sync] Error with args: '%s'存在时,'%s'与'%s'互斥! ",
-			infra.ArgDouble, infra.ArgTimeUpdate, infra.ArgSizeUpdate))
-		return
-	}
-	if !e.timeUpdate && !e.sizeUpdate {
-		err = errors.New(fmt.Sprintf("[sync] Error with args: '%s'不存在时,'%s'与'%s'有且至少有一个! ",
-			infra.ArgDouble, infra.ArgTimeUpdate, infra.ArgSizeUpdate))
-		return
+	if e.double {
+		if e.timeUpdate && e.sizeUpdate {
+			err = errors.New(fmt.Sprintf("[sync] Error with args: '%s'存在时,'%s'与'%s'互斥! ",
+				infra.ArgDouble, infra.ArgTimeUpdate, infra.ArgSizeUpdate))
+			return
+		}
+		if e.md5Update {
+			err = errors.New(fmt.Sprintf("[sync] Error with args: '%s'存在时,不支持'%s'! ",
+				infra.ArgDouble, infra.ArgMd5Update))
+			return
+		}
+	} else {
+		if !e.timeUpdate && !e.sizeUpdate && !e.md5Update {
+			err = errors.New(fmt.Sprintf("[sync] Error with args: '%s'不存在时,['%s','%s','%s']有且至少有一个! ",
+				infra.ArgDouble, infra.ArgTimeUpdate, infra.ArgSizeUpdate, infra.ArgMd5Update))
+			return
+		}
 	}
 
 	e.srcList.SetParams(e.recurse, !e.ignore, e.logger)
@@ -189,6 +199,10 @@ func (e *syncExecutor) execMixedMirroring() {
 		}
 		if e.sizeUpdate && infra.CompareWithSize(srcFileInfo, tarFileInfo) <= 0 {
 			e.logger.Infoln(fmt.Sprintf("[sync] Ignored by '%s':'%s'", infra.ArgSizeUpdate, srcRelative))
+			continue
+		}
+		if e.md5Update && infra.CompareWithMd5(srcFull, tarFull) {
+			e.logger.Infoln(fmt.Sprintf("[sync] Ignored by '%s':'%s'", infra.ArgMd5Update, srcRelative))
 			continue
 		}
 		e.src2tar(srcFull, tarFull, m.GetRootSubPath())

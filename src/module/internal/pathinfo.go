@@ -36,6 +36,7 @@ type pathInfo struct {
 
 	relativePath string // 临时补全的完整相对路径,基于(运行目录/配置文件目录)
 	fullPath     string // 临时补全的完整绝对路径
+	md5          string // md5计算结果
 }
 
 func (i *pathInfo) GetRelativeRoot() string {

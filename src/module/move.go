@@ -23,6 +23,7 @@ type moveExecutor struct {
 	stable     bool // 保持目录结构，处理文件时使用
 	timeUpdate bool // 只处理新时间文件，处理文件时使用
 	sizeUpdate bool // 只处理size更大文件，处理文件时使用
+	md5Update  bool // 只处理md5不同文件，处理文件时使用
 
 	searcher    internal.IPathSearcher
 	tempSrcInfo infra.SrcInfo
@@ -67,6 +68,7 @@ func (e *moveExecutor) initArgs() error {
 	e.stable = argsMark.MatchArg(infra.MarkStable)
 	e.timeUpdate = argsMark.MatchArg(infra.MarkTimeUpdate)
 	e.sizeUpdate = argsMark.MatchArg(infra.MarkSizeUpdate)
+	e.md5Update = argsMark.MatchArg(infra.MarkMd5Update)
 
 	e.searcher.SetParams(e.recurse, !e.ignore, e.logger)
 	return nil
@@ -104,6 +106,10 @@ func (e *moveExecutor) execList() {
 			}
 			if e.sizeUpdate && infra.CompareWithSize(srcFileInfo, tarFileInfo) <= 0 { // 忽略目标大文件
 				e.logger.Infoln(fmt.Sprintf("[move] Ignored by '%s':'%s'", infra.ArgSizeUpdate, srcPathInfo.GetRelativePath()))
+				continue
+			}
+			if e.md5Update && infra.CompareWithMd5(srcPathInfo.GetFullPath(), tarFull) { // 忽略目标md5相同文件
+				e.logger.Infoln(fmt.Sprintf("[move] Ignored by '%s':'%s'", infra.ArgMd5Update, srcPathInfo.GetRelativePath()))
 				continue
 			}
 		}

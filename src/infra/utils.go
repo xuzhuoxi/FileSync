@@ -31,19 +31,3 @@ func GetFileInfo(path string) os.FileInfo {
 	}
 	return fileInfo
 }
-
-// 比较源文件与目标文件的修改时间
-// >0：	源文件新
-// =0：	时间相同
-// <0：	源文件旧
-func CompareWithTime(srcInfo, tarInfo os.FileInfo) int64 {
-	return srcInfo.ModTime().UnixNano() - tarInfo.ModTime().UnixNano()
-}
-
-// 比较源文件与目标文件的大小
-// >0：	源文件新
-// =0：	时间相同
-// <0：	源文件旧
-func CompareWithSize(srcInfo, tarInfo os.FileInfo) int64 {
-	return srcInfo.Size() - tarInfo.Size()
-}

@@ -9,6 +9,7 @@ const (
 	ArgStable      = "/s"    //保持文件目录结构
 	ArgTimeUpdate  = "/time" //若目标文件比源文件旧，更新目标文件
 	ArgSizeUpdate  = "/size" //若目标文件比源文件大，更新目标文件
+	ArgMd5Update   = "/md5"  //若目标文件md5与源文件不一致，更新目标文件
 )
 
 const argStart = '/'
@@ -24,22 +25,23 @@ const (
 	MarkStable
 	MarkTimeUpdate
 	MarkSizeUpdate
+	MarkMd5Update
 )
 
 const (
 	ClearArgMark  = MarkLogFile | MarkLogPrint | MarkRecurse
-	CopyArgMark   = MarkIgnoreEmpty | MarkLogFile | MarkLogPrint | MarkRecurse | MarkStable | MarkTimeUpdate | MarkSizeUpdate
+	CopyArgMark   = MarkIgnoreEmpty | MarkLogFile | MarkLogPrint | MarkRecurse | MarkStable | MarkTimeUpdate | MarkSizeUpdate | MarkMd5Update
 	DeleteArgMark = MarkLogFile | MarkLogPrint | MarkRecurse
-	MoveArgMark   = MarkIgnoreEmpty | MarkLogFile | MarkLogPrint | MarkRecurse | MarkStable | MarkTimeUpdate | MarkSizeUpdate
-	SyncArgMark   = MarkDouble | MarkIgnoreEmpty | MarkLogFile | MarkLogPrint | MarkRecurse | MarkTimeUpdate | MarkSizeUpdate
+	MoveArgMark   = MarkIgnoreEmpty | MarkLogFile | MarkLogPrint | MarkRecurse | MarkStable | MarkTimeUpdate | MarkSizeUpdate | MarkMd5Update
+	SyncArgMark   = MarkDouble | MarkIgnoreEmpty | MarkLogFile | MarkLogPrint | MarkRecurse | MarkTimeUpdate | MarkSizeUpdate | MarkMd5Update
 )
 
 var (
 	ClearArgs  = []string{ArgLogFile, ArgLogPrint, ArgRecurse}
-	CopyArgs   = []string{ArgIgnoreEmpty, ArgLogFile, ArgLogPrint, ArgRecurse, ArgStable, ArgTimeUpdate, ArgSizeUpdate}
+	CopyArgs   = []string{ArgIgnoreEmpty, ArgLogFile, ArgLogPrint, ArgRecurse, ArgStable, ArgTimeUpdate, ArgSizeUpdate, ArgMd5Update}
 	DeleteArgs = []string{ArgLogFile, ArgLogPrint, ArgRecurse}
-	MoveArgs   = []string{ArgIgnoreEmpty, ArgLogFile, ArgLogPrint, ArgRecurse, ArgStable, ArgTimeUpdate, ArgSizeUpdate}
-	SyncArgs   = []string{ArgDouble, ArgIgnoreEmpty, ArgLogFile, ArgLogPrint, ArgRecurse, ArgTimeUpdate, ArgSizeUpdate}
+	MoveArgs   = []string{ArgIgnoreEmpty, ArgLogFile, ArgLogPrint, ArgRecurse, ArgStable, ArgTimeUpdate, ArgSizeUpdate, ArgMd5Update}
+	SyncArgs   = []string{ArgDouble, ArgIgnoreEmpty, ArgLogFile, ArgLogPrint, ArgRecurse, ArgTimeUpdate, ArgSizeUpdate, ArgMd5Update}
 )
 
 const DefaultArgMark = MarkLogFile | MarkLogPrint
@@ -58,6 +60,7 @@ func init() {
 	mapMark2Value[MarkStable] = ArgStable
 	mapMark2Value[MarkTimeUpdate] = ArgTimeUpdate
 	mapMark2Value[MarkSizeUpdate] = ArgSizeUpdate
+	mapMark2Value[MarkMd5Update] = ArgMd5Update
 
 	mapValue2Mark[ArgDouble] = MarkDouble
 	mapValue2Mark[ArgIgnoreEmpty] = MarkIgnoreEmpty
@@ -67,6 +70,7 @@ func init() {
 	mapValue2Mark[ArgStable] = MarkStable
 	mapValue2Mark[ArgTimeUpdate] = MarkTimeUpdate
 	mapValue2Mark[ArgSizeUpdate] = MarkSizeUpdate
+	mapValue2Mark[ArgMd5Update] = MarkMd5Update
 }
 
 // 检查参数码位的匹配情况
