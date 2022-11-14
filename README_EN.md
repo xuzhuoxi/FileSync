@@ -1,446 +1,383 @@
-# FileSync
+# FileSync  
+File synchronization tool.  
+Can be used for fixed or regular file copy, delete, move functions, and one-way or two-way synchronization of folders.  
 
-File synchronization tool.
+[中文](README.md) | English  
 
-Can be used for fixed or regular file copy, delete, move functions, and one-way or two-way synchronization of folders.
+## <span id="a1">1. Compatibility</span>  
+go1.16.15  
 
-[中文](README.md) | English
+## <span id="a2">2. Start</span>  
 
-## <span id="a1">Compatibility</span>
-
-go1.16.15
-
-## <span id="a2">Getting Started</span>
-
-### <span id="a2.1">1. Download</span>
-
-- Download the release. [hear](https://github.com/xuzhuoxi/FileSync/releases).
-
-- Download the repository:
-
-  ```sh
+### <span id="a2.1">2.1. Download</span>  
+- Download the release version [here](https://github.com/xuzhuoxi/FileSync/releases).  
+- Download repository:  
+```sh
   go get -u github.com/xuzhuoxi/FileSync
-  ```
+```
 
-### <span id="a2.2">2. Build<span>
+### <span id="a2.2">2.2. Build<span>  
+- If you have downloaded the entire warehouse and related dependent warehouses, you can execute ([goxc_build.sh](/goxc_build/build.sh)) to build to get the executable program.  
+- If necessary, you can modify ([goxc_build.sh](/goxc_build/build.sh)) for custom builds, build tools are described in [here](https://github.com/laher/goxc ).  
 
-- Execution the construction file([goxc_build.sh](/goxc_build/build.sh)) to get the releases if you have already downloaded the repository.
+### <span id="a2.3">2.3. Run<span>  
+- only supports command line operation  
+- [Example](/demo)  
 
-- You can modify the construction file([goxc_build.sh](/goxc_build/build.sh)) to achieve what you want if necessary. The command line description is [here](https://github.com/laher/goxc).
+#### <span id="a2.3.1">2.3.1 Command Line Description<span>  
+Two types of command-line actions are supported  
 
-### <span id="a2.3">3. Run<span>
+- run with the parameters in the loaded configuration file:  
+  Command format: `execution file path -file=configuration file path -main=configuration task name/configuration task group name`  
+  For configuration file format description, please refer to: [Configuration file description](#a3.2)  
+  - Specify specific tasks to execute, such as:  
+```sh
+    FileSync -file=demo.yaml -main=copy
+```
+  - Do not specify a specific execution task, execute the default task in the configuration file, such as:  
+```sh
+    FileSync -file=demo.yaml
+```
 
-- Only supports command line operation.
-
-- [Demo](/demo)
-
-#### <span id="a2.3.1">3.1 Command Line<span>
-
-Two types of command line behavior are supported.
-
-- Run with the parameters in the load configuration file
-
-  Command format：`"Executable file path" -file="config file path" -main=task name/task group name`
-
-  Please refer to the configuration file format description：[Configuration file Description](#a3.2)
-
-	- Specify specific tasks to be executed, E.g：
-
-	```sh
-	FileSync -file=demo.yaml -main=copy
-	```
-
-	- Execute the default task in the configuration file，E.g：
-	
-	```sh
-	FileSync -file=demo.yaml
-	```
-
-- Set parameters directly on the command line to run
-
-  Command format：`"Executable file path" -mode="Execution mode" -src="Sources Path" -tar="Target Path" -include="include parameters" -exclude="exclude parameters" -args="Exec Parameters"`
-
-  E.g：
-	
-  ```sh
+- Set parameters directly on the command line to run  
+  Command format: `tool path -mode=execution mode -src=source information -tar=directory information -include=select processing settings -exclude=exclude processing settings -args=execution parameters`  
+  E.g:  
+```sh
   FileSync -mode=copy -src=/data/src1/*;/data/src2 -tar=/data/tar include=*.jpg exclude=*.txt args=/Lf/Lp/r/s
-  ```
-
-## <span id="a3">Manual<span>
-
-### <span id="a3.1">1. Supported Mode<span>
-
-#### <span id="clear">1.1. clear<span>
-
-- Features Description
-
-  Clear empty directories.
-
-- Required parameters
-
-	- mode 	
-	  mode=clear
-	- src
-	  For directory only.
-
-
-- Optional parameter
-
-	- include
-	  只支持dir部分，忽略file部分
-	- exclude
-	  只支持dir部分，忽略file部分
-	- args
-		- 支持执行参数： /Lf /Lp /r
-		- /r
-			- **启用**：**目录及子目录**中**不包含**文件时，会被清除	  	
-			- **关闭**：目录为**空**时，会被清除
-		- 具体执行参数说明请看[执行参数说明](#a3.4)
-
-
-- 忽略参数：tar
-
-#### <span id="copy">1.2. copy<span>
-
-- 功能说明
- 
-  复制文件或目录到指定目录
-
-- 必要参数
-
-	- mode 	
-		mode=copy
-	- src
-		复制数据来源，详情请看[这里](#src)
-	- tar
-		目标路径，**只支持**目录路径，**不支持**多个路径，详情请看[这里](#tar)
-
-
-- 可选参数
-
-	- include
-		无特殊要求，详情请看[这里](#include)
-	- exclude
-		无特殊要求，详情请看[这里](#exclude)
-	- args
-		- 支持执行参数：/i /Lf /Lp /r /s /size /time
-		- /i
-			- **启用**：命中到的目录**不加入**到处理列表，结果为**空**目录**不会**被复制
-			- **关闭**：命中到的目录**会加入**到处理列表，结果为**空**目录**会**被复制
-		- /r
-			- **启用**：会扫描src指定的文件，以及**目录及子目录**的全部文件
-			- **关闭**：只扫描src指定的目录及文件
-		- /s
-			- **启用**：复制文件时会按照**原来的目录结构**进行复制
-			- **关闭**：全部文件或空目录**平铺复制**到tar目录下，名字相同则**覆盖**
-		- /size
-			- **启用**：只有目标文件**不存在**或源文件的size**大于**目标文件时才进行复制并覆盖
-		- /time
-			- **启用**：只有目标文件**不存在**或源文件的**修改时间大于**目标文件时才进行复制并覆盖
-		- /md5
-			- **启用**：只有目标文件**不存在**或源文件的**md5值不等于**目标文件时才进行复制并覆盖
-		- 注意
-			- /size、/time与/md5都**关闭**时，直接复制
-			- /size、/time与/md5都**启用**时，**同时**满足才会复制
-		- 具体执行参数说明请看[执行参数说明](#a3.4)
-
-#### <span id="delete">1.3. delete<span>
-
-- 功能说明
-
-  删除文件或目录
-
-- 必要参数
-
-	- mode 	
-		mode=delete	
-	- src
-		目录及文件列表
-
-
-- 可选参数
-
-	- include
-		dir部分只用于选择，不会加入处理列表
-		其它详情请看[这里](#include)
-	- exclude
-		无特殊要求，详情请看[这里](#exclude)
-	- args
-		- 支持执行参数： /Lf /Lp /r
-		- /r
-			- **启用**：对子目录中的文件进行查找，命中则加入到处理列表
-			- **关闭**：忽略子目录
-		- 具体执行参数说明请看[执行参数说明](#a3.4)
-
-
-- 忽略参数：tar
-
-#### <span id="move">1.4. move<span>
-
-- 功能说明
-
-  移动文件或目录到指定目录
-
-- 必要参数
-
-	- mode 	
-		mode=move
-	- src
-		移动数据来源，详情请看[这里](#src)
-	- tar
-		目标路径，**只支持**目录路径，**不支持**多个路径，详情请看[这里](#tar)
-
-
-- 可选参数
-
-	- include
-		无特殊要求，详情请看[这里](#include)
-	- exclude
-		无特殊要求，详情请看[这里](#exclude)
-	- args
-		- 支持执行参数：/i /Lf /Lp /r /s /size /time
-		- /i
-			- **启用**：命中到的目录**不加入**到处理列表，结果为**空**目录**不会**被移动
-			- **关闭**：命中到的目录**会加入**到处理列表，结果为**空**目录**会**被移动
-		- /r
-			- **启用**：会扫描src指定的文件，以及**目录及子目录**的全部文件
-			- **关闭**：只扫描src指定的目录及文件
-		- /s
-			- **启用**：复制文件时会按照**原来的目录结构**进行移动
-			- **关闭**：全部文件或空目录**平铺复制**到tar目录下，名字相同则**覆盖**
-		- /size
-			- **启用**：只有目标文件**不存在**或源文件的size**大于**目标文件时才进行移动并覆盖
-		- /time
-			- **启用**：只有目标文件**不存在**或源文件的**修改时间大于**目标文件时才进行移动并覆盖
-		- /md5
-			- **启用**：只有目标文件**不存在**或源文件的**md5值不等于**目标文件时才进行移动并覆盖
-		- 注意
-			- /size、/time与/md5都**关闭**时，直接移动
-			- /size、/time与/md5都**启用**时，**同时**满足才会移动
-			- **只有文件移动完成后，源目录为空才会执行目录移动**
-		- 具体执行参数说明请看[执行参数说明](#a3.4)
-
-#### <span id="sync">1.5. sync<span>
-
-- 功能说明
-
-  双向同步两个目录 或 单向同步
-
-- 必要参数
-
-	- mode 	
-		mode=sync
-	- src
-		源目录，只支持目录路径，不支持多个，不支持通配符
-	- tar
-		目标目录，只支持目录路径，不支持多个，不支持通配符
-
-- 可选参数
-
-	- include
-		无特殊要求，详情请看[这里](#include)
-	- exclude
-		无特殊要求，详情请看[这里](#exclude)
-	- args
-		- 支持执行参数：/d /i /Lf /Lp /r /size /time
-		- /d
-			- **启用**：双向同步
-			- **关闭**：单身同步，src => tar
-		- /i
-			- **启用**：命中到的目录**不加入**到处理列表，结果为**空**目录**不会**被同步
-			- **关闭**：命中到的目录**会加入**到处理列表，结果为**空**目录**会**被同步
-		- /r
-			- **启用**：会扫描src指定的文件，以及**目录及子目录**的全部文件
-			- **关闭**：只扫描src指定的目录及文件
-		- /size
-			- **启用**：只有目标文件**不存在**或源文件的size**大于**目标文件时才进行同步并覆盖
-		- /time
-			- **启用**：只有目标文件**不存在**或源文件的**修改时间大于**目标文件时才进行同步并覆盖
-		- /md5
-			- **启用**：只有目标文件**不存在**或源文件的**md5值不等于**目标文件时才进行同步并覆盖
-		- 注意
-			- /d启用时，/size和/time**有且只有**一个启用，并且不支持/md5参数
-			- /d关闭时，/size、/time与/md5**至少**有一个启用，两个都启用时为**且**关系
-			- 同步功能必然会**保持目录结构**
-		- 具体执行参数说明请看[执行参数说明](#a3.4)
-
-### <span id="a3.2">2. Configuration File Description<span>
-
-使用yaml格式的配置文件,结构如下：
-
-```
-main: string                    //默认，可填入 任务名 或 任务组名称
-groups:                         //任务组数组
-	- {
-		name:       string      //任务组名称，用于区分每个任务或任务组
-		tasks:    string      //目标任务列表，各个任务间使用英文逗号“,”分隔
-	  }
-tasks:                        //任务数组
-	- {
-		name:       string      //任务名称：	用于区分每个任务或任务组
-		mode:       string      //任务模式：	用于区分任务真实的执行行为
-		src:        string      //任务来源：	任务的文件或目录来源，支持通配符
-		tar:        string      //任务目标：	任务的文件或目录的去处
-		include:    string      //包含配置：	任务来源的命中包含设置，支持通配符
-		exclude:    string      //排序配置：	任务来源的命中排除设置，支持通配符
-		args:       string      //执行参数：	执行时的行为参数设置
-	  }
 ```
 
-###  <span id="a3.3">3. Configuration File Parameter Description<span>
+## <span id="a3">3. User Manual<span>  
 
-#### <span id="name">3.1. name (Task ID)<span>
+### <span id="a3.1">3.1. Support mode<span>  
 
-- 用于区分不同任务和任务组
+#### <span id="clear">3.1.1. clear<span>  
 
-#### <span id="mode">3.2. mode (Execution Mode)<span>
+- Function Description  
+  clear empty directories  
 
-- 现支持模式有：[clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
+- required parameter  
+  - mode  
+    mode=clear  
+  - src  
+    only for directories  
 
-#### <span id="src">3.3. src (Source Paths)<span>
+- optional parameter  
+  - include  
+    Only the dir part is supported, the file part is ignored  
+  - exclude  
+    Only the dir part is supported, the file part is ignored  
+  - args  
+    - Support execution parameters: /Lf /Lp /r  
+    - /r  
+      - **Enable**: When **does not contain** files in **directories and subdirectories**, they will be cleared  
+      - **OFF**: When the directory is **empty**, it will be cleared  
+    - Please refer to [execution parameter description](#a3.4) for specific execution parameter description  
 
-- 来源路径，支持多个路径，使用";"分隔
-- 支持通配符路径，如”\data\\*.png“, "\*"匹配[0,n)个字符
-- **注意**："\data"和"\data\"相同，指的是data目录，"\data\\*"指的是data目录下的全部文件
+- ignore arguments: tar  
 
-#### <span id="tar">3.4. tar (Target Path)<span>
+#### <span id="copy">3.1.2. copy<span>  
 
-- 目标路径，**只支持**目录路径，**不支持**多个路径
-- **注意**：[clear](#clear)、[delete](#delete)模式下忽略当前参数
+- Function Description  
+  Copy a file or directory to a specified directory  
 
-#### <span id="include">3.5. include (Included Configs)<span>
+- required parameter  
+  - mode  
+    mode=copy  
+  - src  
+    Copy the data source, please see [here](#src) for details   
+  - tar  
+    Target path, **only supports** directory path, **does not support** multiple paths, please see [here](#tar) for details  
 
-- 格式：“file:\*.jpg,123.png;dir:folder1,fi\*er2,fi\*”，"file"部分与"dir"部分使用";"分隔
-- **注意**：不配置"-include"或者"-include=空"时，**匹配全部src符合要求的文件**		
-- file部分
-	支持具体文件名，如 "123.png"等
-	支持通配符，如 "\*.jpg"、"a\*b.jpg"等，其中"\*"匹配[0,n)个字符
-	多个使用","分隔
-- dir部分
-	支持具体文件名，如 "folder1"
-	支持通配符，如 "fi\*er2"、"fi\*"等，其中"\*"匹配[0,n)个字符
-	多个使用","分隔
+- optional parameter  
+  - include  
+    No special requirements, please see [here](#include) for details   
+  - exclude  
+    No special requirements, please see [here](#exclude) for details   
+  - args  
+    - Support execution parameters: /i /Lf /Lp /r /s /size /time  
+    - /i  
+      - **Enable**: Hit directories **not added** to the processing list, resulting in **empty** directories **not** copied  
+      - **OFF**: The hit directory **will be added** to the processing list, and the result will be **empty** directory **will be** copied  
+    - /r  
+      - **Enable**: The file specified by src and all files in **directory and subdirectory** will be scanned  
+      - **OFF**: Only scan directories and files specified by src  
+    - /s  
+      - **Enable**: When copying files, they will be copied according to the **original directory structure**  
+      - **Close**: All files or empty directories **tile copy** to the tar directory, **overwrite** if the names are the same  
+    - /size  
+      - **Enable**: Copy and overwrite only when the target file **does not exist** or the size of the source file** is larger than** the target file  
+    - /time  
+      - **Enable**: Copy and overwrite only if the target file **does not exist** or the **modified time of the source file is greater than** the target file  
+    - /md5  
+      - **Enable**: Copy and overwrite only when the target file **does not exist** or the **md5 value of the source file is not equa**l to the target file  
+    - Notice  
+      - Copy directly when /size, /time and /md5 are **closed**  
+      - When /size, /time and /md5 are **enabled**, they will only be copied if they are satisfied at the same time  
+    - Please refer to [execution parameter description](#a3.4) for specific execution parameter description  
 
-#### <span id="exclude">3.6. exclude (Excluded Configs)<span>
+#### <span id="delete">3.1.3. delete<span>  
 
-- 格式：“file:\*.jpg,123.png;dir:folder1,fi\*er2,fi\*”，"file"部分与"dir"部分使用";"分隔
-- **注意**：不配置"-exclude"或者"-exclude=空"时，**不排除文件**		
-- file部分
-	支持具体目录名，如 "123.png"等
-	支持通配符，如 "\*.jpg"、"a\*b.jpg"等，其中"\*"匹配[0,n)个字符
-	多个使用","分隔
-- dir部分
-	支持具体文件名，如 "folder1"
-	支持通配符，如 "fi\*er2"、"fi\*"等，其中"\*"匹配[0,n)个字符
-	多个使用","分隔
+- Function Description  
+  delete file or directory  
 
-#### <span id="args">3.7. args (Exec Parameters)<span>
+- required parameter  
+  - mode  
+    mode=delete  
+  - src  
+    Directory and file listing  
 
-- 执行参数，支持如下：**[/d](#/d)**,	**[/i](#/i)**,	**[/Lf](#/Lf)**,	**[/Lp](#/Lp)**,	**[/r](#/r)**,	**[/s](#/s)**,	**[/size](#/size)**,	**[/time](#/time)**
-- 多个参数可直接拼接，如"/d/i/Lf"
-- 具体执行参数说明请看[执行参数说明](#a3.4)
+- optional parameter  
+  - include  
+    The dir part is only used for selection and will not be added to the processing list  
+    See [here](#include) for more details   
+  - exclude  
+    No special requirements, please see [here](#exclude) for details   
+  - args  
+    - Support execution parameters: /Lf /Lp /r  
+    - /r  
+      - **Enable**: Search for files in subdirectories, and add them to the processing list if they are found  
+      - **OFF**: Ignore subdirectories  
+    - Please refer to [execution parameter description](#a3.4) for specific execution parameter description  
 
-### <span id="a3.4">4. Exec Parameters Description<span>
+- ignore arguments: tar  
 
-#### <span id="d">4.1. /d (double)<span>
+#### <span id="move">3.1.4. move<span>  
 
-- 说明：开启双向同步，默认为单向
-- 适用范围： [sync](#FileSync)
+- Function Description  
+  Move a file or directory to a specified directory  
 
-#### <span id="i">4.2. /i (ignore empty)<span>
+- required parameter  
+  - mode  
+    mode=move  
+  - src  
+    Mobile data sources, see [here](#src) for details  
+  - tar  
+    Target path, **only supports** directory path, **does not support** multiple paths, please see [here](#tar) for details  
 
-- 说明：忽略空目录，默认为不忽略
-- 适用范围： [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
+- optional parameter  
+  - include  
+    No special requirements, please see [here](#include) for details  
+  - exclude  
+    No special requirements, please see [here](#exclude) for details  
+  - args  
+    - Support execution parameters: /i /Lf /Lp /r /s /size /time   
+    -/i   
+      - **Enable**: The hit directory **does not add** to the processing list, the result is **empty** directory **will not** be moved  
+      - **OFF**: The hit directory **will be added** to the processing list, and the result will be **empty** directory **will be**moved  
+    - /r  
+      - **Enable**: The file specified by src and all files in **directory and subdirectory** will be scanned  
+      - **OFF**: Only scan directories and files specified by src  
+    - /s  
+      - **Enable**: When copying files, they will be moved according to the **original directory structure**  
+      - **Close**: All files or empty directories **tile copy** to the tar directory, **overwrite** if the names are the same  
+    - /size  
+      - **Enable**: Move and overwrite only when the target file **does not exist** or the size of the source file** is larger than the target file  
+    - /time  
+      - **Enable**: Move and overwrite only if the target file **does not exist** or the **modified time of the source file is greater than** the target file  
+    - /md5  
+      - **Enable**: Move and overwrite only when the target file **does not exist** or the **md5 value of the source file is not equal to the target file  
+    - Notice  
+      - When /size, /time and /md5 are **closed**, move directly  
+      - When /size, /time and /md5 are **enabled**, they will only move when **simultaneous** are satisfied  
+      - **Directory movement will only be performed if the source directory is empty after the file movement is complete**  
+    - Please refer to [execution parameter description](#a3.4) for specific execution parameter description  
 
-#### <span id="Lf">4.3. /Lf (enable log file)<span>
+#### <span id="sync">3.1.5. sync<span>
 
-- 说明：开启记录日志，默认不记录日志
-- 适用范围： [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
+- Function Description  
+  Two-way synchronization of two directories or one-way synchronization  
 
-#### <span id="Lp">4.4. /Lp (enable print)<span>
+- required parameters  
+  - mode  
+    mode=sync  
+  - src  
+    Source directory, only supports directory path, does not support multiple, does not support wildcards  
+  - tar  
+    Target directory, only supports directory path, does not support multiple, does not support wildcards  
 
-- 说明：控制台打印信息，默认不打印信息
-- 适用范围： [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
+- optional parameter  
+  - include  
+    No special requirements, please see [here](#include) for details  
+  - exclude  
+    No special requirements, please see [here](#exclude) for details   
+  - args  
+    - Support execution parameters: /d /i /Lf /Lp /r /size /time  
+    - /d  
+      - **Enable**: 2-way sync  
+      - **close**: singleton sync, src => tar  
+    - /i  
+      - **Enable**: The hit directory **is not added** to the processing list, and the result is **empty** directory **will not** be synchronized  
+      - **OFF**: The hit directory **will be added** to the processing list, and the result will be **empty** directory **will be** synchronized  
+    - /r  
+      - **Enable**: The file specified by src and all files in **directory and subdirectory** will be scanned  
+      - **OFF**: Only scan directories and files specified by src  
+    - /size  
+      - **Enable**: Synchronize and overwrite only when the target file **does not exist** or the size of the source file** is larger than** the target file  
+    - /time  
+      - **Enable**: Synchronize and overwrite only when the target file **does not exist** or the **modified time of the source file is greater than** the target file  
+    - /md5  
+      - **Enable**: Synchronize and overwrite only when the target file **does not exist** or the **md5 value of the source file is not equal to** the target file  
+    - Notice  
+      - When /d is enabled, **only one and only one of** /size and /time is enabled, and the /md5 parameter is not supported  
+      - When /d is disabled, **at least one of** /size, /time and /md5 is enabled, and when both are enabled, it is **and**relation  
+      - The sync function necessarily **maintains the directory structure**  
+    - Please refer to [execution parameter description](#a3.4) for specific execution parameter description  
 
-#### <span id="r">4.5. /r (enable recurse)<span>
+### <span id="a3.2">3.2. Configuration file description<span>  
+Using the configuration file in yaml format, the structure is as follows:  
+```yaml
+main: string //default, you can fill in task name or task group name
+groups: //Array of task groups
+  - {
+    name: string //Task group name, used to distinguish each task or task group
+    tasks: string //List of target tasks, each task is separated by a comma ","
+    }
+tasks: //task array
+  - {
+    name: string //Task name: used to distinguish each task or task group
+    mode: string //task mode: used to distinguish the real execution behavior of the task
+    src: string //Task source: The file or directory source of the task, wildcards are supported
+    tar: string //task target: where the task's file or directory goes
+    include: string //Include configuration: Hit include settings for task sources, support wildcards
+    exclude: string //Sort configuration: Hit exclusion settings for task sources, wildcards are supported
+    args: string //Execution parameters: Behavior parameter settings during execution
+    }
+```
 
-- 说明：递归，默认不递归
-- 适用范围： [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)
+### <span id="a3.3">3.3. Configuration file parameter description<span>  
 
-#### <span id="s">4.6. /s (keep structure stable)<span>
+#### <span id="name">3.3.1. name (task ID)<span>  
+- Used to distinguish between different tasks and task groups  
 
-- 说明：保持文件目录结构，默认不保持
-- 适用范围： [copy](#copy), [move](#move)
+#### <span id="mode">3.3.2. mode (execution mode)<span>  
+- Now supported modes are: [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)  
 
-#### <span id="size">4.7. /size (handle by size)<span>
+#### <span id="src">3.3.3. src (source path)<span>  
+- Source path, multiple paths are supported, separated by ";"  
+- Supports wildcard paths, such as "\data\\*.png", "\*" matches [0,n) characters  
+- **Note**: "\data" is the same as "\data\", referring to the data directory, "\data\\*" refers to all files in the data directory  
 
-- 说明：按文件大小处理
-- 适用范围： [copy](#copy), [move](#move), [sync](#sync)
+#### <span id="tar">3.3.4.tar (target path)<span>  
+- Target path, **only supports** directory paths, **does not support** multiple paths  
+- **Note**: The current parameter is ignored in [clear](#clear), [delete](#delete) mode  
 
-#### <span id="time">4.8. /time (handle by time)<span>
+#### <span id="include">3.3.5.include (include configuration)<span>  
+- Format: "file:\*.jpg,123.png;dir:folder1,fi\*er2,fi\*", the "file" part and the "dir" part are separated by ";"  
+- **Note**: When "-include" or "-include=empty" is not configured, **match all src files that meet the requirements**  
+- file part  
+  Support specific file names, such as "123.png", etc.  
+  Wildcards are supported, such as "\*.jpg", "a\*b.jpg", etc., where "\*" matches [0,n) characters  
+  Use "," to separate multiple  
+- dir part  
+  Support specific file names, such as "folder1"  
+  Wildcards are supported, such as "fi\*er2", "fi\*", etc., where "\*" matches [0,n) characters  
+  Use "," to separate multiple  
 
-- 说明：按时间处理
-- 适用范围： [copy](#copy), [move](#move), [sync](#sync)
+#### <span id="exclude">3.3.6. exclude (exclude configuration)<span>  
+- Format: "file:\*.jpg,123.png;dir:folder1,fi\*er2,fi\*", the "file" part and the "dir" part are separated by ";"  
+- **Note**: When "-exclude" or "-exclude=empty" is not configured, **files are not excluded**  
+- file part  
+  Support specific directory names, such as "123.png", etc.  
+  Wildcards are supported, such as "\*.jpg", "a\*b.jpg", etc., where "\*" matches [0,n) characters  
+  Use "," to separate multiple  
+- dir part  
+  Support specific file names, such as "folder1"  
+  Wildcards are supported, such as "fi\*er2", "fi\*", etc., where "\*" matches [0,n) characters  
+  Use "," to separate multiple  
 
-#### <span id="time">4.9. /md5 (handle by md5)<span>
+#### <span id="args">3.3.7. args (execution parameters)<span>  
+- Execution parameters, supported as follows: **[/d](#/d)**, **[/i](#/i)**, **[/Lf](#/Lf)**, **[/Lp](#/Lp)**, **[/r](#/r)**, **[/s](#/s)**, **[/size](#/ size)**, **[/time](#/time)**  
+- Multiple parameters can be directly spliced, such as "/d/i/Lf"  
+- Please refer to [execution parameter description](#a3.4) for specific execution parameter description  
 
-- 说明：按md5值处理
-- 适用范围： [copy](#copy), [move](#move), [sync](#sync)
+### <span id="a3.4">3.4. Execution parameter description<span>  
 
-### <span id="a3.5">5. Wildcard Filter(include、exclude、src) Description<span>
+#### <span id="d">3.4.1. /d (two-way sync)<span>  
+- Description: Enable two-way synchronization, the default is one-way  
+- Scope: [sync](#FileSync)  
 
-以下为文件的命中判断的**常规逻辑**
-1. [src](#src)中的通配符
-	- 目录
-	- 文件
-	- 通配符
-2. [exclude](#exclude)中的通配符(如果存在)
-	- 符合：排除
-	- 不符合：进行下一步判断
-3. [include](#include)中的通配符(如果存在)
-	- 符合：加入到命中列表
-	- 不符合：排除
+#### <span id="i">3.4.2. /i (ignore empty directories)<span>  
+- Description: Ignore empty directories, the default is not to ignore  
+- Scope: [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)  
 
-**注意**：
+#### <span id="Lf">3.4.3. /Lf (open file log)<span>  
+- Description: Enable logging, no logging by default  
+- Scope: [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)  
 
-- [exclude](#exclude)中dir参数**存在**且**匹配**，当前目录与子目录将会排除
-- [include](#include)中dir参数**存在**且**不匹配**，当前目录与子目录将会排除
-- 以上为常规逻辑，具体行为请查看相关的模式说明：[支持模式](#a3.1)
+#### <span id="Lp">3.4.4. /Lp (enable printing)<span>  
+- Description: the console prints information, the default does not print information  
+- Scope: [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)  
 
-### <span id="a3.6">6. 命令行说明<span>
+#### <span id="r">3.4.5. /r (turn on recursion)<span>  
+- Description: recursive, default not recursive  
+- Scope: [clear](#clear), [copy](#copy), [delete](#delete), [move](#move), [sync](#sync)  
 
-- 支持**指定配置运行**和**直接参数运行**两类命令行功能
-- **注意优先级**：指定配置运行 > 直接参数运行
+#### <span id="s">3.4.6. /s (keep directory structure)<span>  
+- Description: keep the file directory structure, the default is not maintained  
+- Scope: [copy](#copy), [move](#move)  
 
-1. 指定配置运行:
-	命令格式：`工具路径 -file=配置文件路径 -main=配置任务名/配置任务组名`
-	配置文件格式说明请参考：[配置文件格式](#a3.2)
-	- 形式一：指定具体执行任务执行
-		例子：
-		```sh
-		FileSync -file=demo.yaml -main=copy
-		```
-	- 形式二：不指定具体执行任务，执行配置文件中默认任务 
-		例子：
-		```sh
-		FileSync -file=demo.yaml
-		```
-2. 直接参数运行
-	命令格式：`工具路径 -mode=执行模式 -src=来源信息 -tar=目录信息 -include=选择处理设置 -exclude=排除处理设置 -args=执行参数`
-	例子：
-	```sh
-	FileSync -mode=copy -src=/data/src1/*;/data/src2 -tar=/data/tar include=*.jpg exclude=*.txt args=/Lf/Lp/r/s
-	```
+#### <span id="size">3.4.7. /size (processing according to file size difference)<span>  
+- Description: Process by file size  
+- Scope: [copy](#copy), [move](#move), [sync](#sync)  
 
-## <span id="a4">核心依赖<span>
+#### <span id="time">3.4.8. /time (processing according to file modification time difference)<span>  
+- Description: Process by time  
+- Scope: [copy](#copy), [move](#move), [sync](#sync)  
 
-- infra-go [https://github.com/xuzhuoxi/infra-go](https://github.com/xuzhuoxi/infra-go)
-- goxc [https://github.com/laher/goxc](https://github.com/laher/goxc) 
+#### <span id="time">3.4.9. /md5 (processing according to file md5 value difference)<span>  
+- Description: Process according to md5 value  
+- Scope: [copy](#copy), [move](#move), [sync](#sync)  
 
-## <span id="a5">联系方式<span>
+### <span id="a3.5">3.5. Hit (filter) description<span>  
+The following is the **conventional logic** of the hit judgment of the file  
+1. Wildcards in [src](#src)  
+  - Table of contents  
+  - document  
+  - wildcard  
+2. Wildcards in [exclude](#exclude) (if present)  
+  - Complies with: Excluded  
+  - Non-conformance: proceed to the next judgment  
+3. Wildcards in [include](#include) (if present)  
+  - Match: add to hit list  
+  - Non-Compliant: Excluded  
 
-xuzhuoxi 
-<xuzhuoxi@gmail.com> or <mailxuzhuoxi@163.com>
+**Notice**:  
 
-## <span id="a6">开源许可证<span>
-~~FileSync source code is available under the MIT [License](/LICENSE).~~
+- The dir parameter in [exclude](#exclude) **exists** and **matches**, the current directory and subdirectories will be excluded  
+- The dir parameter in [include](#include) **exists** and **does not match**, the current directory and subdirectories will be excluded  
+- The above is general logic, please refer to the relevant mode description for specific behavior: [Support mode](#a3.1)  
+
+### <span id="a3.6">3.6. Command Line Description<span>  
+- Supports **specified configuration operation** and **direct parameter operation** two types of command line functions  
+- **NOTE PRIORITIES**: Specify Configuration Run > Direct Argument Run  
+
+1. Specify the configuration to run:  
+Command format: `tool path -file=configuration file path -main=configuration task name/configuration task group name`  
+For the description of the configuration file format, please refer to: [Configuration file format](#a3.2)  
+  - Form 1: Specify specific tasks to be executed  
+  example:  
+```sh
+  FileSync -file=demo.yaml -main=copy
+```
+  - Form 2: Do not specify a specific execution task, execute the default task in the configuration file  
+  example:  
+```sh
+  FileSync -file=demo.yaml
+```
+2. Direct parameter operation  
+Command format: `tool path -mode=execution mode -src=source information -tar=directory information -include=select processing settings -exclude=exclude processing settings -args=execution parameters`  
+example:  
+```sh
+  FileSync -mode=copy -src=/data/src1/*;/data/src2 -tar=/data/tar include=*.jpg exclude=*.txt args=/Lf/Lp/r/s
+```
+
+## <span id="a4">4. Core dependencies<span>  
+- infra-go [https://github.com/xuzhuoxi/infra-go](https://github.com/xuzhuoxi/infra-go)  
+- goxc [https://github.com/laher/goxc](https://github.com/laher/goxc)  
+
+## <span id="a5">5. Contact<span>  
+xuzhuoxi  
+<xuzhuoxi@gmail.com> or <mailxuzhuoxi@163.com>  
+
+## <span id="a6">6. Open Source License<span>  
+FileSync source code is available under the MIT [License](/LICENSE).  
