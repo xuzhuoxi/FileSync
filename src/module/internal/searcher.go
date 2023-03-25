@@ -5,6 +5,7 @@ import (
 	"github.com/xuzhuoxi/FileSync/src/infra"
 	"github.com/xuzhuoxi/infra-go/filex"
 	"github.com/xuzhuoxi/infra-go/logx"
+	"io/fs"
 	"io/ioutil"
 	"os"
 )
@@ -24,7 +25,11 @@ type IPathSearcher interface {
 	// 初始化
 	InitSearcher()
 	// 查找
-	Search(RelativeRoot string, checkRoot bool)
+	Search(relativeRoot string, checkRoot bool)
+	// 追加结果
+	// 忽略全部过滤条件
+	AppendResult(result string, fileInfo fs.FileInfo)
+
 	// 结果排序
 	SortResults()
 	// 取结果
@@ -74,6 +79,15 @@ func (e *pathSearcher) Search(relativeRoot string, checkRoot bool) {
 	} else {
 		e.checkSubDir(relativeRoot, "")
 	}
+}
+
+func (e *pathSearcher) AppendResult(relativeResult string, fileInfo fs.FileInfo) {
+	if nil == fileInfo {
+		return
+	}
+	fn := fileInfo.Name()
+	relateRoot := relativeResult[0 : len(relativeResult)-len(fn)]
+	e.checkFile(relateRoot, fn, fileInfo)
 }
 
 func (e *pathSearcher) SortResults() {

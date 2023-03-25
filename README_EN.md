@@ -90,9 +90,11 @@ Two types of command-line actions are supported
 
 - optional parameter  
   - include  
-    No special requirements, please see [here](#include) for details   
+    See [here] for details (#include)  
+    Special requirements: Ignore when /file in -args is enabled  
   - exclude  
-    No special requirements, please see [here](#exclude) for details   
+    See [here] for details (#exclude)  
+    Special requirements: Ignore when /file in -args is enabled     
   - args  
     - Support execution parameters: /i /Lf /Lp /r /s /size /time  
     - /i  
@@ -104,6 +106,9 @@ Two types of command-line actions are supported
     - /s  
       - **Enable**: When copying files, they will be copied according to the **original directory structure**  
       - **Close**: All files or empty directories **tile copy** to the tar directory, **overwrite** if the names are the same  
+    - /file  
+      - **Enable**: Single file processing mode, src and tar must be file paths. The include and exclude parameters are ignored.   
+      - **OFF**: Default  
     - /size  
       - **Enable**: Copy and overwrite only when the target file **does not exist** or the size of the source file** is larger than** the target file  
     - /time  
@@ -156,12 +161,14 @@ Two types of command-line actions are supported
 
 - optional parameter  
   - include  
-    No special requirements, please see [here](#include) for details  
+    See [here] for details (#include)  
+    Special requirements: Ignore when /file in -args is enabled  
   - exclude  
-    No special requirements, please see [here](#exclude) for details  
+    See [here] for details (#exclude)  
+    Special requirements: Ignore when /file in -args is enabled   
   - args  
     - Support execution parameters: /i /Lf /Lp /r /s /size /time   
-    -/i   
+      -/i   
       - **Enable**: The hit directory **does not add** to the processing list, the result is **empty** directory **will not** be moved  
       - **OFF**: The hit directory **will be added** to the processing list, and the result will be **empty** directory **will be**moved  
     - /r  
@@ -170,6 +177,9 @@ Two types of command-line actions are supported
     - /s  
       - **Enable**: When copying files, they will be moved according to the **original directory structure**  
       - **Close**: All files or empty directories **tile copy** to the tar directory, **overwrite** if the names are the same  
+    - /file  
+      - **Enable**: Single file processing mode, src and tar must be file paths. The include and exclude parameters are ignored.   
+      - **OFF**: Default  
     - /size  
       - **Enable**: Move and overwrite only when the target file **does not exist** or the size of the source file** is larger than the target file  
     - /time  
@@ -255,7 +265,7 @@ tasks: //task array
 #### <span id="src">3.3.3. src (source path)<span>  
 - Source path, multiple paths are supported, separated by ";"  
 - Supports wildcard paths, such as "\data\\*.png", "\*" matches [0,n) characters  
-- **Note**: "\data" is the same as "\data\", referring to the data directory, "\data\\*" refers to all files in the data directory  
+- **Note**: "\data" is the same as "\data\\", referring to the data directory, "\data\\*" refers to all files in the data directory  
 
 #### <span id="tar">3.3.4.tar (target path)<span>  
 - Target path, **only supports** directory paths, **does not support** multiple paths  
@@ -286,7 +296,7 @@ tasks: //task array
   Use "," to separate multiple  
 
 #### <span id="args">3.3.7. args (execution parameters)<span>  
-- Execution parameters, supported as follows: **[/d](#/d)**, **[/i](#/i)**, **[/Lf](#/Lf)**, **[/Lp](#/Lp)**, **[/r](#/r)**, **[/s](#/s)**, **[/size](#/ size)**, **[/time](#/time)**  
+- Execution parameters, supported as follows: **[/d](#/d)**, **[/i](#/i)**, **[/Lf](#/Lf)**, **[/Lp](#/Lp)**, **[/r](#/r)**, **[/s](#/s)**,  **[/file](#/file)**,  **[/size](#/size)**,  **[/time](#/time)**, **[/md5](#/md5)**   
 - Multiple parameters can be directly spliced, such as "/d/i/Lf"  
 - Please refer to [execution parameter description](#a3.4) for specific execution parameter description  
 
@@ -316,15 +326,19 @@ tasks: //task array
 - Description: keep the file directory structure, the default is not maintained  
 - Scope: [copy](#copy), [move](#move)  
 
-#### <span id="size">3.4.7. /size (processing according to file size difference)<span>  
+#### <span id="file">3.4.7. /file (single file processing mode)<span>
+- Description: For single-file processing, src and tar must be file paths, and wildcards and multi-paths are not supported. The include and exclude parameters are ignored.  
+- Scope: [copy](#copy), [move](#move)  
+
+#### <span id="size">3.4.8. /size (processing according to file size difference)<span>  
 - Description: Process by file size  
 - Scope: [copy](#copy), [move](#move), [sync](#sync)  
 
-#### <span id="time">3.4.8. /time (processing according to file modification time difference)<span>  
+#### <span id="time">3.4.9. /time (processing according to file modification time difference)<span>  
 - Description: Process by time  
 - Scope: [copy](#copy), [move](#move), [sync](#sync)  
 
-#### <span id="time">3.4.9. /md5 (processing according to file md5 value difference)<span>  
+#### <span id="time">3.4.10. /md5 (processing according to file md5 value difference)<span>  
 - Description: Process according to md5 value  
 - Scope: [copy](#copy), [move](#move), [sync](#sync)  
 
@@ -355,12 +369,12 @@ The following is the **conventional logic** of the hit judgment of the file
 Command format: `tool path -file=configuration file path -main=configuration task name/configuration task group name`  
 For the description of the configuration file format, please refer to: [Configuration file format](#a3.2)  
   - Form 1: Specify specific tasks to be executed  
-  example:  
+    example:  
 ```sh
   FileSync -file=demo.yaml -main=copy
 ```
   - Form 2: Do not specify a specific execution task, execute the default task in the configuration file  
-  example:  
+    example:  
 ```sh
   FileSync -file=demo.yaml
 ```

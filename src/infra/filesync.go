@@ -8,7 +8,7 @@ import (
 
 const (
 	ApplicationName    = "FileSync"
-	ApplicationVersion = "1.0.0"
+	ApplicationVersion = "1.0.6"
 )
 
 var (
