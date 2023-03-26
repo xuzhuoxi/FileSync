@@ -195,7 +195,7 @@ func (e *moveExecutor) doMoveFile(pathInfo internal.IPathInfo) {
 	e.logger.Infoln(fmt.Sprintf("[move] Move file2file '%s' => '%s'", pathInfo.GetRelativePath(), tarRelative))
 
 	filex.CompleteParentPath(tarFull, pathInfo.GetFileInfo().Mode())
-	os.Rename(pathInfo.GetFullPath(), tarFull)
+	internal.DoMove(pathInfo.GetFullPath(), tarFull, nil)
 }
 
 func (e *moveExecutor) doMoveDir(pathInfo internal.IPathInfo) {
@@ -209,7 +209,7 @@ func (e *moveExecutor) doMoveDir(pathInfo internal.IPathInfo) {
 		return
 	}
 	filex.CompleteParentPath(tarFull, fileInfo.Mode())
-	os.Rename(pathInfo.GetFullPath(), tarFull)
+	internal.DoMove(pathInfo.GetFullPath(), tarFull, nil)
 }
 
 func (e *moveExecutor) fileFitting(fileInfo os.FileInfo) bool {

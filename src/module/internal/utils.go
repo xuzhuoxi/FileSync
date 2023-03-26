@@ -41,22 +41,21 @@ func DoCopy(srcPath, tarPath string, doFilter func(srcFileInfo, tarFileInfo os.F
 // 移动
 func DoMove(srcPath, tarPath string, doFilter func(srcFileInfo, tarFileInfo os.FileInfo) bool) {
 	srcFileInfo := infra.GetFileInfo(srcPath)
-	if nil == srcFileInfo {
+	if nil == srcFileInfo { // 源不存在
 		return
 	}
 	tarFileInfo := infra.GetFileInfo(tarPath)
-	if nil != doFilter && !doFilter(srcFileInfo, tarFileInfo) {
+	if nil != doFilter && !doFilter(srcFileInfo, tarFileInfo) { // 过滤条件成立，忽略
 		return
 	}
 
-	if nil != tarFileInfo {
-		filex.Remove(tarPath)
-	} else {
+	if nil == tarFileInfo { // 目标不存在
 		filex.CompleteParentPath(tarPath, srcFileInfo.Mode())
+		os.Rename(srcPath, tarPath)
+		return
 	}
-	os.Rename(srcPath, tarPath)
 
-	if !srcFileInfo.IsDir() || filex.IsEmptyDir(srcPath) {
-		filex.Remove(srcPath)
-	}
+	// 目标存在
+	filex.Remove(tarPath)
+	os.Rename(srcPath, tarPath)
 }

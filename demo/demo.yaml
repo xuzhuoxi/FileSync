@@ -26,7 +26,7 @@ tasks:
     args: '/Lf/Lp/md5'
   - name: 'delete'
     mode: 'delete'
-    src: 'path'
+    src: 'delete/src1;delete/src2'
     include: 'file:*;dir:*'
     exclude: 'file:*.meta'
     args: '/i/Lf/Lp/r'
