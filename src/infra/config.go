@@ -11,6 +11,7 @@ import (
 const (
 	PathListSeparatorStr = filex.PathListSeparatorStr
 	DirSeparator         = filex.UnixSeparator
+	NameSeq              = ","
 )
 
 type ConfigTask struct {
@@ -24,7 +25,7 @@ type ConfigTask struct {
 }
 
 func (ct ConfigTask) String() string {
-	return ct.ToFullString()
+	return fmt.Sprintf("Task{Name=%s,Mode=%s}", ct.Name, ct.Mode)
 }
 
 func (ct ConfigTask) ToFullString() string {
@@ -98,11 +99,20 @@ type ConfigGroup struct {
 	Tasks string `yaml:"tasks"`
 }
 
+func (o ConfigGroup) GetTasks() (tasks []string) {
+	str := strings.TrimSpace(o.Tasks)
+	if len(str) == 0 {
+		return nil
+	}
+	return strings.Split(str, NameSeq)
+}
+
 type Config struct {
-	RelativeRoot string        `yaml:"root"` // 相对路径的根目录
-	Main         string        `yaml:"main"`
-	Groups       []ConfigGroup `yaml:"groups"`
-	Tasks        []ConfigTask  `yaml:"tasks"`
+	RelativeRoot string        `yaml:"root"`      // 相对路径的根目录
+	Main         string        `yaml:"main"`      // 任务默认入口
+	Groups       []ConfigGroup `yaml:"groups"`    // 任务组
+	Sequences    []ConfigGroup `yaml:"sequences"` // 预制任务组合
+	Tasks        []ConfigTask  `yaml:"tasks"`     // 任务列表
 }
 
 // 配置主任务列表
@@ -119,16 +129,45 @@ func (c *Config) GetMainTasks(main string) []ConfigTask {
 	if task, ok := c.GetTask(main); ok {
 		return []ConfigTask{task}
 	}
-	if c.Groups == nil || len(c.Groups) == 0 {
-		return nil
-	}
-	for index := range c.Groups {
-		if c.Groups[index].Name == main {
-			taskNames := strings.Split(c.Groups[index].Tasks, ",")
-			return c.GetTasks(taskNames)
-		}
+	if tasks, ok := c.GetTasksFromGroup(main); ok {
+		return tasks
 	}
 	return nil
+}
+
+func (c *Config) GetTasksFromGroup(groupName string) (tasks []ConfigTask, ok bool) {
+	if len(c.Groups) == 0 {
+		return nil, false
+	}
+	for index := range c.Groups {
+		if c.Groups[index].Name == groupName {
+			ts := c.Groups[index].GetTasks()
+			for _, name := range ts {
+				if task, ok := c.GetTask(name); ok { // 普通任务
+					tasks = append(tasks, task)
+					continue
+				}
+				if seqTasks, ok := c.GetTasksFromSequence(name); ok { // 预制任务
+					tasks = append(tasks, seqTasks...)
+					continue
+				}
+			}
+			return tasks, true
+		}
+	}
+	return nil, false
+}
+
+func (c *Config) GetTasksFromSequence(seqName string) (tasks []ConfigTask, ok bool) {
+	if len(c.Sequences) == 0 {
+		return nil, false
+	}
+	for index := range c.Sequences {
+		if c.Sequences[index].Name == seqName {
+			return c.GetTasks(c.Sequences[index].GetTasks()), true
+		}
+	}
+	return nil, false
 }
 
 // 取任务列表

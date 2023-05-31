@@ -59,7 +59,7 @@ func (e *clearExecutor) initArgs() error {
 	argsMark := e.task.ArgsMark
 	e.logger = infra.GenLogger(argsMark)
 	e.recurse = argsMark.MatchArg(infra.MarkRecurse)
-	fmt.Println("initArgs", e.recurse)
+	//fmt.Println("initArgs", e.recurse)
 	return nil
 }
 

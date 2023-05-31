@@ -5,6 +5,13 @@ groups:
     tasks: 'clear,copy,delete,move,sync'
   - name: 'some'
     tasks: 'clear,copy,sync'
+  - name: 'test'
+    tasks: 'clear,seq_1'
+
+sequences:
+  - name: "seq_1"
+    tasks: 'copy,copy_md5'
+
 tasks:
   - name: 'clear'
     mode: 'clear'

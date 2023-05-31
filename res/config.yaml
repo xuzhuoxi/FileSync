@@ -1,9 +1,17 @@
 main: 'all'
+
 groups:
   - name: 'all'
     tasks: 'clear,copy,delete,move,sync'
   - name: 'some'
     tasks: 'clear,copy,sync'
+  - name: 'test'
+    tasks: 'seq_1,sync'
+
+sequences:
+  - name: "seq_1"
+    tasks: 'clear,copy'
+
 tasks:
   - name: 'clear'
     mode: 'clear'

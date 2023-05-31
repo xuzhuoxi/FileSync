@@ -20,7 +20,7 @@ func main() {
 	}
 	infra.Logger.Println()
 	infra.Logger.Println("********************新命令分割线********************")
-	infra.Logger.Infoln(fmt.Sprintf("[main] Task number=%d", len(cfgTasks)))
+	infra.Logger.Infoln(fmt.Sprintf("[main] Tasks[%d]:%v", len(cfgTasks), cfgTasks))
 	infra.Logger.Infoln(fmt.Sprintf("[main] RunningRelativeRoot='%s'", infra.RunningDir))
 	execTasks(cfgTasks)
 }
