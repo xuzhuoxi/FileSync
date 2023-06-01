@@ -241,9 +241,14 @@ go1.16.15
 main: string  //默认，可填入 任务名 或 任务组名称
 groups:  //任务组数组
   - {
-    name:       string   //任务组名称，用于区分每个任务或任务组
+    name:     string   //任务组名称，用于区分每个任务或任务组
     tasks:    string     //目标任务列表，各个任务间使用英文逗号“,”分隔
     }
+sequences:  //任务队列数组
+  - {
+    name:     string   //任务队列名称，用于区分每个任务或任务组
+    tasks:    string     //目标任务列表，各个任务间使用英文逗号“,”分隔
+    }    
 tasks:                   //任务数组
   - {
     name:       string   //任务名称：  用于区分每个任务或任务组
@@ -254,7 +259,10 @@ tasks:                   //任务数组
     exclude:    string   //排序配置：  任务来源的命中排除设置，支持通配符
     args:       string   //执行参数：  执行时的行为参数设置
     }
-```
+```  
+
+![image](/docs/images/cfg_0.png)  
+![image](/docs/images/cfg_1.png)  
 
 ###  <span id="a3.3">3.3. 配置文件参数说明<span>  
 

@@ -242,6 +242,11 @@ groups: //Array of task groups
     name: string //Task group name, used to distinguish each task or task group
     tasks: string //List of target tasks, each task is separated by a comma ","
     }
+sequences: //task queue array
+   -{
+     name: string //Task queue name, used to distinguish each task or task group
+     tasks: string //Target task list, each task is separated by a comma ","
+     }
 tasks: //task array
   - {
     name: string //Task name: used to distinguish each task or task group
@@ -253,6 +258,9 @@ tasks: //task array
     args: string //Execution parameters: Behavior parameter settings during execution
     }
 ```
+
+![image](/docs/images/cfg_0.png)  
+![image](/docs/images/cfg_1.png)  
 
 ### <span id="a3.3">3.3. Configuration file parameter description<span>  
 
